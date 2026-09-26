@@ -487,7 +487,7 @@ describe('SafeCity — Midnight Blockchain Test Suite', () => {
 
     // Inspect Public Reports Map on Ledger
     for (const [, report] of simulator.public_reports) {
-      const publicSerialized = JSON.stringify(report)
+      const publicSerialized = JSON.stringify(report, (_k, v) => (typeof v === 'bigint' ? v.toString() : v))
       expect(publicSerialized).not.toContain(privateReporterIdentity)
       expect(publicSerialized).not.toContain(privateCrimeDescription)
       expect(publicSerialized).not.toContain('Main St')
@@ -524,7 +524,7 @@ describe('SafeCity — Midnight Blockchain Test Suite', () => {
     )
 
     for (const [, record] of simulator.volunteer_credentials) {
-      const recordSerialized = JSON.stringify(record)
+      const recordSerialized = JSON.stringify(record, (_k, v) => (typeof v === 'bigint' ? v.toString() : v))
       expect(recordSerialized).not.toContain(privateVolunteerName)
       expect(recordSerialized).not.toContain(privateVolunteerId)
       expect(recordSerialized).not.toContain(privateAddress)
@@ -533,7 +533,7 @@ describe('SafeCity — Midnight Blockchain Test Suite', () => {
     }
 
     // Inspect API result and proof metadata
-    const apiResultSerialized = JSON.stringify(submitResult)
+    const apiResultSerialized = JSON.stringify(submitResult, (_k, v) => (typeof v === 'bigint' ? v.toString() : v))
     expect(apiResultSerialized).not.toContain(privateVolunteerName)
     expect(apiResultSerialized).not.toContain(privateVolunteerId)
     expect(apiResultSerialized).not.toContain(privateAddress)

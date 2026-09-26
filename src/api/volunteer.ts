@@ -118,7 +118,17 @@ function saveAttestation(att: OnChainVolunteerAttestation): void {
 function getStoredCredentialRecords(): Record<string, VolunteerCredentialRecord> {
   try {
     const raw = localStorage.getItem(CREDENTIAL_RECORDS_KEY)
-    if (raw) return JSON.parse(raw)
+    if (raw) {
+      const parsed = JSON.parse(raw) as Record<string, { credentialId: string | number | bigint; verificationStatus: ConfidentialCredentialStatus; statusCode: number; timestamp: number }>
+      const result: Record<string, VolunteerCredentialRecord> = {}
+      for (const [k, v] of Object.entries(parsed)) {
+        result[k] = {
+          ...v,
+          credentialId: BigInt(v.credentialId),
+        }
+      }
+      return result
+    }
   } catch {
     // Ignore
   }
@@ -129,7 +139,8 @@ function saveCredentialRecord(rec: VolunteerCredentialRecord): void {
   try {
     const all = getStoredCredentialRecords()
     all[rec.credentialId.toString()] = rec
-    localStorage.setItem(CREDENTIAL_RECORDS_KEY, JSON.stringify(all))
+    const serialized = JSON.stringify(all, (_k, v) => (typeof v === 'bigint' ? v.toString() : v))
+    localStorage.setItem(CREDENTIAL_RECORDS_KEY, serialized)
   } catch {
     // LocalStorage quota or unavailable
   }
