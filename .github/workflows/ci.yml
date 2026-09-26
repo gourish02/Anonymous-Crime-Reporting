@@ -68,7 +68,7 @@ jobs:
           echo "✅ Required contract circuits present"
 
       - name: Run Midnight Compact Contract Test Suite
-        run: node contract/test/crime_report.test.mjs
+        run: node contract/test/crime_report.contract-test.mjs
 
   # ── Python AI Crime Classifier Check ───────────────────────────────────────
   ai-backend-check:
