@@ -1,0 +1,54 @@
+name: Deploy to Vercel
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy-preview:
+    name: Build & Verify Production
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build
+        run: npm run build
+        env:
+          VITE_MIDNIGHT_NETWORK: preprod
+          VITE_CONTRACT_ADDRESS_PREPROD: ${{ secrets.CONTRACT_ADDRESS_PREPROD }}
+          VITE_CONTRACT_ADDRESS_DEVNET: ${{ secrets.CONTRACT_ADDRESS_DEVNET }}
+
+      - name: Deploy to Vercel
+        id: deploy
+        if: ${{ env.VERCEL_TOKEN != '' }}
+        uses: amondnet/vercel-action@v25
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          vercel-args: '--prod'
+          working-directory: ./
+
+  deploy-production:
+    name: Production Status
+    runs-on: ubuntu-latest
+    needs: deploy-preview
+
+    steps:
+      - name: Production deployment status
+        run: |
+          echo "✅ Production build verified and ready for Vercel"
+          echo "Repository: gourish02/Anonymous-Crime-Reporting"
