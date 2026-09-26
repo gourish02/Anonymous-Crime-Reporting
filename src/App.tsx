@@ -15,7 +15,7 @@ import { AIClassifierPage }   from '@/pages/AIClassifierPage'
 import { VolunteerVerificationPage } from '@/pages/VolunteerVerificationPage'
 import { CredentialSubmissionPage }  from '@/pages/CredentialSubmissionPage'
 import { VerificationResultPage }     from '@/pages/VerificationResultPage'
-import { PublicStatisticsDashboardPage } from '@/pages/PublicStatisticsDashboardPage'
+import { PublicSafetyDashboardPage }     from '@/pages/PublicSafetyDashboardPage'
 
 export default function App() {
   return (
@@ -36,8 +36,9 @@ export default function App() {
             <Route path="/volunteer/verify"  element={<VolunteerVerificationPage />}      />
             <Route path="/volunteer/submit"  element={<CredentialSubmissionPage />}       />
             <Route path="/volunteer/result"  element={<VerificationResultPage />}         />
-            {/* Public Statistics Dashboard */}
-            <Route path="/dashboard"         element={<PublicStatisticsDashboardPage />}  />
+            {/* Public Safety Dashboard */}
+            <Route path="/dashboard"         element={<PublicSafetyDashboardPage />}      />
+            <Route path="/safety-dashboard"  element={<PublicSafetyDashboardPage />}      />
             {/* Catch-all */}
             <Route path="*"                  element={<Navigate to="/" replace />}        />
           </Route>

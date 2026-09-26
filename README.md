@@ -85,8 +85,10 @@ SafeCity features a modern, responsive navigation bar with the 4 primary destina
 - **Volunteer Verification (`/volunteer`)**: Confidential credential verification hub with selective disclosure:
   - **Credential Submission (`/volunteer/submit`)**: Private witness inputs (Name, ID, Address, Certificate No., Contact, Expiry) hashed locally into a commitment without exposing PII.
   - **Volunteer Verification (`/volunteer/verify`)**: Zero-knowledge proof verification evaluating eligibility and expiration against the Midnight ledger.
-  - **Verification Result (`/volunteer/result`)**: Clear proof certificate displaying **`✓ Verified Volunteer`** and `ACTIVE` / `EXPIRED` status without leaking any private attributes.
-- **Dashboard (`/dashboard`)**: Comprehensive Public Statistics Dashboard with cross-module analytics, category distribution meters, volunteer certification health, and Preprod testnet status.
+- **Dashboard (`/dashboard`, `/safety-dashboard`)**: Comprehensive **Public Safety Dashboard** showcasing:
+  - 📊 **5 Core Metrics**: Total Crime Reports, Verified Crime Reports, Total Volunteer Credentials, Active Volunteers, and Expired Credentials.
+  - 📈 **Interactive Charts & Cards**: Category taxonomy distribution, volunteer credential health meter, and live on-chain status.
+  - 🔒 **Midnight Selective Disclosure Demonstration**: Interactive proof pipeline demonstrating that names, volunteer IDs, addresses, certificate numbers, and contact details are **never** revealed.
 
 ---
 
@@ -240,7 +242,7 @@ anonymous-crime-reporting-dapp/
 │   │   ├── VolunteerVerificationPage.tsx # Volunteer Verification portal & tabs
 │   │   ├── CredentialSubmissionPage.tsx # Confidential Credential Submission form
 │   │   ├── VerificationResultPage.tsx # Verification Result ('✓ Verified Volunteer')
-│   │   └── PublicStatisticsDashboardPage.tsx # Public Statistics Dashboard
+│   │   └── PublicSafetyDashboardPage.tsx # Public Safety Dashboard (Charts, Cards & Selective Disclosure)
 │   ├── types/                      # Shared TypeScript definitions
 │   ├── App.tsx                     # React Router v6 routing (Home, Crime, Volunteer, Dashboard)
 │   ├── index.css                   # Catppuccin Mocha design system
