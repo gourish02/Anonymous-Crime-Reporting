@@ -21,6 +21,7 @@ import {
   verifyVolunteerCredential,
   getVerificationStatus,
 } from '@/api/volunteer'
+import { useApp } from '@/context/AppContext'
 import type {
   VolunteerCredentialInput,
   VolunteerVerificationResult,
@@ -41,6 +42,7 @@ const DEFAULT_CREDENTIAL: VolunteerCredentialInput = {
 
 export function VolunteerVerificationPage() {
   const navigate = useNavigate()
+  const { isAgeEligible } = useApp()
   const [activeTab, setActiveTab]         = useState<'prove' | 'verifier' | 'directory'>('prove')
   const [form, setForm]                   = useState<VolunteerCredentialInput>(DEFAULT_CREDENTIAL)
   const [isProving, setIsProving]         = useState(false)
@@ -158,6 +160,41 @@ export function VolunteerVerificationPage() {
               >
                 Midnight Selective Disclosure
               </span>
+              {isAgeEligible ? (
+                <span
+                  style={{
+                    fontSize: '0.72rem',
+                    padding: '2px 8px',
+                    borderRadius: '12px',
+                    background: 'rgba(34, 197, 94, 0.15)',
+                    color: '#22c55e',
+                    border: '1px solid rgba(34, 197, 94, 0.3)',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                  onClick={() => navigate('/age-verify')}
+                  title="Age verified 18+ via zero-knowledge proof"
+                >
+                  ✓ Age 18+ Verified
+                </span>
+              ) : (
+                <span
+                  style={{
+                    fontSize: '0.72rem',
+                    padding: '2px 8px',
+                    borderRadius: '12px',
+                    background: 'rgba(245, 158, 11, 0.15)',
+                    color: '#f59e0b',
+                    border: '1px solid rgba(245, 158, 11, 0.3)',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                  }}
+                  onClick={() => navigate('/age-verify')}
+                  title="Click to complete zero-knowledge age verification"
+                >
+                  Age Verify (ZK) &rarr;
+                </span>
+              )}
             </div>
             <p style={{ margin: 0, color: '#a6adc8', fontSize: '0.95rem' }}>
               Prove possession of a valid volunteer credential without revealing your name, ID, address, certificate number, or contact info.

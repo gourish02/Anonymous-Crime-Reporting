@@ -15,6 +15,7 @@ import { AIClassifierPage }   from '@/pages/AIClassifierPage'
 import { VolunteerVerificationPage } from '@/pages/VolunteerVerificationPage'
 import { CredentialSubmissionPage }  from '@/pages/CredentialSubmissionPage'
 import { VerificationResultPage }     from '@/pages/VerificationResultPage'
+import { AgeVerificationPage }        from '@/pages/AgeVerificationPage'
 import { PublicSafetyDashboardPage }     from '@/pages/PublicSafetyDashboardPage'
 
 export default function App() {
@@ -36,6 +37,9 @@ export default function App() {
             <Route path="/volunteer/verify"  element={<VolunteerVerificationPage />}      />
             <Route path="/volunteer/submit"  element={<CredentialSubmissionPage />}       />
             <Route path="/volunteer/result"  element={<VerificationResultPage />}         />
+            {/* Age Eligibility Verification (Module 3) */}
+            <Route path="/age-verify"        element={<AgeVerificationPage />}            />
+            <Route path="/age"               element={<AgeVerificationPage />}            />
             {/* Public Safety Dashboard */}
             <Route path="/dashboard"         element={<PublicSafetyDashboardPage />}      />
             <Route path="/safety-dashboard"  element={<PublicSafetyDashboardPage />}      />

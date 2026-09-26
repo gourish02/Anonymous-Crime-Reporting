@@ -72,8 +72,11 @@ jobs:
           grep -qE "export circuit (submit_report|submitCrimeReport)" contract/src/crime_report.compact && \
           grep -q "export circuit submitVolunteerCredential" contract/src/crime_report.compact && \
           grep -q "export circuit verifyVolunteerCredential" contract/src/crime_report.compact && \
+          grep -q "export circuit submitAgeCredential" contract/src/crime_report.compact && \
+          grep -q "export circuit verifyAgeEligibility" contract/src/crime_report.compact && \
+          grep -q "export circuit getEligibilityStatus" contract/src/crime_report.compact && \
           grep -q "export ledger" contract/src/crime_report.compact && \
-          echo "✅ All required Module 1 & Module 2 circuits present"
+          echo "✅ All required Module 1, Module 2 & Module 3 circuits present"
 
       - name: Execute Midnight Compact contract test suite
         run: node contract/test/crime_report.contract-test.mjs

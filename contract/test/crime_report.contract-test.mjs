@@ -16,9 +16,14 @@ class MidnightCompactTestEngine {
     this.verified_count = 0n
     this.volunteer_count = 0n
     this.active_volunteers_count = 0n
+    this.age_credential_count = 0n
+    this.eligible_users_count = 0n
     this.public_reports = new Map()
     this.volunteer_credentials = new Map()
     this.volunteer_attestations = new Map()
+    this.age_eligibility_records = new Map()
+    this.age_eligibility_status = new Map()
+    this.age_timestamp = new Map()
   }
 
   // Circuit 1: submitCrimeReport
@@ -131,6 +136,83 @@ class MidnightCompactTestEngine {
     if (record.verification_status === 2) return 'ACTIVE'
     if (record.verification_status === 1) return 'VERIFIED'
     return 'NOT VERIFIED'
+  }
+
+  // ── Module 3: Age Eligibility Verification Circuits ───────────────────────
+
+  // Circuit 1: submitAgeCredential
+  submitAgeCredential(witness, timestamp) {
+    assert.ok(typeof witness.userAge === 'number', 'Witness userAge required')
+    assert.ok(witness.governmentIdHash, 'Witness governmentIdHash required')
+    assert.ok(witness.dateOfBirth, 'Witness dateOfBirth required')
+
+    this.age_credential_count += 1n
+    const credentialId = this.age_credential_count
+
+    const isEligible = witness.userAge >= 18
+    const statusCode = isEligible ? 1 : 0
+    const status = isEligible ? 'ELIGIBLE' : 'NOT ELIGIBLE'
+
+    if (isEligible) {
+      this.eligible_users_count += 1n
+    }
+
+    // Only public state stored — NO actual age, NO DOB, NO ID
+    this.age_eligibility_records.set(credentialId, {
+      credential_id: credentialId,
+      eligibility_status: statusCode,
+      is_eligible: isEligible,
+      timestamp,
+    })
+    this.age_eligibility_status.set(credentialId, statusCode)
+    this.age_timestamp.set(credentialId, timestamp)
+
+    return {
+      credentialId,
+      status,
+      statusCode,
+      isEligible,
+    }
+  }
+
+  // Circuit 2: verifyAgeEligibility
+  verifyAgeEligibility(credentialId, witness, currentTime) {
+    const record = this.age_eligibility_records.get(credentialId)
+    if (!record) {
+      return {
+        credentialId,
+        status: 'NOT ELIGIBLE',
+        statusCode: 0,
+        isEligible: false,
+      }
+    }
+
+    const isEligible = witness.userAge >= 18
+    const statusCode = isEligible ? 1 : 0
+    const status = isEligible ? 'ELIGIBLE' : 'NOT ELIGIBLE'
+
+    record.eligibility_status = statusCode
+    record.is_eligible = isEligible
+    record.timestamp = currentTime
+
+    this.age_eligibility_status.set(credentialId, statusCode)
+    this.age_timestamp.set(credentialId, currentTime)
+
+    return {
+      credentialId,
+      status,
+      statusCode,
+      isEligible,
+    }
+  }
+
+  // Circuit 3: getEligibilityStatus
+  getEligibilityStatus(credentialId) {
+    const status = this.age_eligibility_status.get(credentialId)
+    if (status === undefined) {
+      return 'NOT ELIGIBLE'
+    }
+    return status === 1 ? 'ELIGIBLE' : 'NOT ELIGIBLE'
   }
 }
 
@@ -305,4 +387,87 @@ describe('Midnight Compact Contract Circuits Test Suite', () => {
       assert.ok(!serialized.includes(privatePhone), 'Volunteer record must NOT contain phone number')
     }
   })
+
+  // Test 6: Age >= 18 passes eligibility verification
+  test('6. Age >= 18 passes eligibility verification', () => {
+    const now = BigInt(Date.now())
+    const adultWitness = {
+      userAge: 25,
+      dateOfBirth: '1999-04-12',
+      governmentIdHash: '0x' + 'aa'.repeat(32),
+      userSecretSalt: '0x' + '11'.repeat(32),
+    }
+
+    const submission = engine.submitAgeCredential(adultWitness, now)
+    assert.equal(submission.status, 'ELIGIBLE')
+    assert.equal(submission.statusCode, 1)
+    assert.equal(submission.isEligible, true)
+    assert.equal(engine.age_credential_count, 1n)
+    assert.equal(engine.eligible_users_count, 1n)
+
+    const verification = engine.verifyAgeEligibility(submission.credentialId, adultWitness, now)
+    assert.equal(verification.status, 'ELIGIBLE')
+    assert.equal(verification.statusCode, 1)
+    assert.equal(verification.isEligible, true)
+
+    const readStatus = engine.getEligibilityStatus(submission.credentialId)
+    assert.equal(readStatus, 'ELIGIBLE')
+  })
+
+  // Test 7: Age < 18 fails eligibility verification
+  test('7. Age < 18 fails eligibility verification', () => {
+    const now = BigInt(Date.now())
+    const minorWitness = {
+      userAge: 16,
+      dateOfBirth: '2008-09-20',
+      governmentIdHash: '0x' + 'bb'.repeat(32),
+      userSecretSalt: '0x' + '22'.repeat(32),
+    }
+
+    const submission = engine.submitAgeCredential(minorWitness, now)
+    assert.equal(submission.status, 'NOT ELIGIBLE')
+    assert.equal(submission.statusCode, 0)
+    assert.equal(submission.isEligible, false)
+
+    const verification = engine.verifyAgeEligibility(submission.credentialId, minorWitness, now)
+    assert.equal(verification.status, 'NOT ELIGIBLE')
+    assert.equal(verification.statusCode, 0)
+    assert.equal(verification.isEligible, false)
+
+    const readStatus = engine.getEligibilityStatus(submission.credentialId)
+    assert.equal(readStatus, 'NOT ELIGIBLE')
+
+    // Unknown credential ID returns NOT ELIGIBLE
+    assert.equal(engine.getEligibilityStatus(99999n), 'NOT ELIGIBLE')
+  })
+
+  // Test 8: Actual age and personal identity information remain strictly hidden
+  test('8. Actual age and personal identity information remain private', () => {
+    const secretAge = 34
+    const secretDOB = '1990-11-05'
+    const secretGovId = '0xSECRET_GOV_ID_HASH_9999'
+    const secretSalt = '0xSUPER_SECRET_SALT_7777'
+
+    const submission = engine.submitAgeCredential(
+      {
+        userAge: secretAge,
+        dateOfBirth: secretDOB,
+        governmentIdHash: secretGovId,
+        userSecretSalt: secretSalt,
+      },
+      BigInt(Date.now())
+    )
+
+    // Inspect Public Age Records
+    for (const [, record] of engine.age_eligibility_records) {
+      const serialized = JSON.stringify(record, (k, v) => (typeof v === 'bigint' ? v.toString() : v))
+      assert.ok(!serialized.includes(String(secretAge)), 'Age record must NOT contain actual age number')
+      assert.ok(!serialized.includes(secretDOB), 'Age record must NOT contain date of birth')
+      assert.ok(!serialized.includes(secretGovId), 'Age record must NOT contain government ID hash')
+      assert.ok(!serialized.includes(secretSalt), 'Age record must NOT contain secret salt')
+      assert.ok('is_eligible' in record, 'Public record contains is_eligible')
+      assert.ok('eligibility_status' in record, 'Public record contains eligibility_status')
+    }
+  })
 })
+

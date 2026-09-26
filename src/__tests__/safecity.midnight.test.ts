@@ -24,10 +24,20 @@ import {
   computeCredentialCommitment,
   VOLUNTEER_PRESETS,
 } from '@/api/volunteer'
+import {
+  submitAgeCredential,
+  verifyAgeEligibility,
+  getEligibilityStatus as getAgeEligibilityStatus,
+  calculateAge,
+  computeAgeCommitment,
+  AGE_PRESETS,
+} from '@/api/ageVerification'
 import type {
   ReportFormData,
   VolunteerCredentialInput,
   ConfidentialCredentialStatus,
+  AgeCredentialInput,
+  AgeEligibilityStatus,
 } from '@/types'
 
 // ── In-Memory Storage Polyfill for Vitest / Node Environment ─────────────────
@@ -578,4 +588,102 @@ describe('SafeCity — Midnight Blockchain Test Suite', () => {
     expect(hashA.length).toBe(66) // '0x' + 64 hex chars
     expect(hashB.length).toBe(66)
   })
+
+  // ───────────────────────────────────────────────────────────────────────────
+  // MODULE 3: AGE ELIGIBILITY VERIFICATION TESTS
+  // ───────────────────────────────────────────────────────────────────────────
+
+  // Test 7: Age >= 18 passes eligibility verification
+  it('7. Age >= 18 passes eligibility verification (ELIGIBLE)', async () => {
+    const adultInput: AgeCredentialInput = {
+      fullName: 'Marcus Aurelius',
+      dateOfBirth: '1995-03-15', // 30+ years old
+      governmentId: 'GOV-DL-992144',
+      identitySalt: '0x' + 'aa'.repeat(32),
+    }
+
+    const calculatedAge = calculateAge(adultInput.dateOfBirth)
+    expect(calculatedAge).toBeGreaterThanOrEqual(18)
+
+    const result = await submitAgeCredential(adultInput, 'preprod')
+    expect(result.status).toBe('ELIGIBLE')
+    expect(result.isEligible).toBe(true)
+    expect(result.statusCode).toBe(1)
+    expect(result.credentialId).toBeGreaterThan(0n)
+    expect(result.proof.circuitName).toBe('submitAgeCredential')
+    expect(result.proof.verifiedOnChain).toBe(true)
+
+    // Verify read-only status query circuit
+    const status = await getAgeEligibilityStatus(result.credentialId)
+    expect(status).toBe('ELIGIBLE')
+
+    // Verify re-evaluation circuit
+    const reVerification = await verifyAgeEligibility(result.credentialId, adultInput)
+    expect(reVerification.status).toBe('ELIGIBLE')
+    expect(reVerification.isEligible).toBe(true)
+  })
+
+  // Test 8: Age < 18 fails eligibility verification
+  it('8. Age < 18 fails eligibility verification (NOT ELIGIBLE)', async () => {
+    const minorInput: AgeCredentialInput = {
+      fullName: 'Tommy Minor',
+      dateOfBirth: '2010-06-20', // ~16 years old
+      governmentId: 'ST-ID-2023-8812',
+      identitySalt: '0x' + 'bb'.repeat(32),
+    }
+
+    const calculatedAge = calculateAge(minorInput.dateOfBirth)
+    expect(calculatedAge).toBeLessThan(18)
+
+    const result = await submitAgeCredential(minorInput, 'preprod')
+    expect(result.status).toBe('NOT ELIGIBLE')
+    expect(result.isEligible).toBe(false)
+    expect(result.statusCode).toBe(0)
+
+    const status = await getAgeEligibilityStatus(result.credentialId)
+    expect(status).toBe('NOT ELIGIBLE')
+
+    // Unknown ID returns NOT ELIGIBLE
+    const unknownStatus = await getAgeEligibilityStatus(999999n)
+    expect(unknownStatus).toBe('NOT ELIGIBLE')
+  })
+
+  // Test 9: Actual age, date of birth, and identity remain strictly private
+  it('9. Actual age, date of birth, and personal identity remain strictly private', async () => {
+    const privateAgeNumber = 29
+    const privateDOB = '1997-12-04'
+    const privateGovId = 'CONFIDENTIAL_PASSPORT_887711'
+    const privateFullName = 'Agent Cassandra Fox'
+    const privateSalt = '0xSECRET_SALT_VALUE_12345'
+
+    const confidentialInput: AgeCredentialInput = {
+      fullName: privateFullName,
+      dateOfBirth: privateDOB,
+      governmentId: privateGovId,
+      identitySalt: privateSalt,
+    }
+
+    const result = await submitAgeCredential(confidentialInput, 'preprod')
+
+    // Inspect the return structure
+    const serialized = JSON.stringify(result, (_k, v) => (typeof v === 'bigint' ? v.toString() : v))
+    expect(serialized).not.toContain(privateFullName)
+    expect(serialized).not.toContain(privateDOB)
+    expect(serialized).not.toContain(privateGovId)
+    expect(serialized).not.toContain(privateSalt)
+    expect(serialized).not.toContain(String(privateAgeNumber))
+
+    // Check selective disclosure contract
+    expect(result.selectiveDisclosure.revealed.eligibilityStatus).toBe('ELIGIBLE')
+    expect(result.selectiveDisclosure.hiddenPrivateFields).toContain('actualAge')
+    expect(result.selectiveDisclosure.hiddenPrivateFields).toContain('dateOfBirth')
+    expect(result.selectiveDisclosure.hiddenPrivateFields).toContain('governmentId')
+
+    // Check commitment hash integrity
+    const commitment = await computeAgeCommitment(confidentialInput)
+    expect(commitment).toMatch(/^0x[a-f0-9]{64}$/)
+    expect(commitment).not.toContain(privateFullName)
+    expect(commitment).not.toContain(privateDOB)
+  })
 })
+

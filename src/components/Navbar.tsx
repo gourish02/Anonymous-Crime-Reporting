@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   ShieldCheck, Home, Wallet, FileText,
   CheckCircle, History, Power, Loader2, Menu, X, Sparkles, UserCheck, BarChart3,
+  ShieldAlert,
 } from 'lucide-react'
 import { useState } from 'react'
 import { useApp } from '@/context/AppContext'
@@ -16,6 +17,7 @@ const NAV_LINKS = [
   { to: '/',           label: 'Home',                    icon: <Home        size={16} /> },
   { to: '/crime',      label: 'Crime Reporting',         icon: <FileText    size={16} /> },
   { to: '/volunteer',  label: 'Volunteer Verification',  icon: <UserCheck   size={16} /> },
+  { to: '/age-verify', label: 'Age Verification',        icon: <ShieldAlert size={16} /> },
   { to: '/dashboard',  label: 'Dashboard',               icon: <BarChart3   size={16} /> },
 ]
 

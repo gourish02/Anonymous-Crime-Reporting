@@ -7,8 +7,9 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   FileText, MapPin, Calendar, AlignLeft, Link2,
-  Send, Cpu, ShieldCheck, AlertTriangle, Lock,
+  Send, Cpu, ShieldCheck, AlertTriangle, Lock, CheckCircle2,
 } from 'lucide-react'
+import toast from 'react-hot-toast'
 import { useApp } from '@/context/AppContext'
 import { PrivacyBadge } from '@/components/PrivacyBadge'
 import { AICrimeAssistant } from '@/components/AICrimeAssistant'
@@ -24,7 +25,7 @@ const INITIAL_FORM: ReportFormData = {
 }
 
 export function SubmitReportPage() {
-  const { isConnected, isSubmitting, lastSubmission, submitReport, connectWallet } = useApp()
+  const { isConnected, isSubmitting, lastSubmission, submitReport, connectWallet, isAgeEligible } = useApp()
   const navigate = useNavigate()
   const location = useLocation()
   const locState = location.state as { initialDescription?: string; initialCrimeType?: number } | undefined
@@ -53,6 +54,16 @@ export function SubmitReportPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!validate()) return
+
+    // Age Verification Gate: User must prove age >= 18
+    if (!isAgeEligible) {
+      toast.error('Age Verification Required: Midnight protocol requires proving you are at least 18 years old before submitting reports.', {
+        icon: '🔒',
+        duration: 5000,
+      })
+      navigate('/age-verify')
+      return
+    }
 
     const result = await submitReport(form)
     if (result) {
@@ -170,6 +181,29 @@ export function SubmitReportPage() {
           </div>
 
           <PrivacyBadge variant="banner" />
+
+          {/* Age Eligibility Status Gate */}
+          {isAgeEligible ? (
+            <div className="age-gate-banner verified" style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', padding: '0.75rem 1rem', background: 'rgba(34, 197, 94, 0.1)', border: '1px solid rgba(34, 197, 94, 0.3)', borderRadius: '8px', marginBottom: '1rem', color: '#22c55e', fontSize: '0.875rem' }}>
+              <CheckCircle2 size={18} />
+              <span><strong>Age Verified (18+):</strong> Cleared by Midnight zero-knowledge proof. Identity and birth date remain confidential.</span>
+            </div>
+          ) : (
+            <div className="age-gate-banner warning" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', padding: '0.85rem 1rem', background: 'rgba(245, 158, 11, 0.12)', border: '1px solid rgba(245, 158, 11, 0.35)', borderRadius: '8px', marginBottom: '1rem', color: '#f59e0b', fontSize: '0.875rem', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <AlertTriangle size={18} />
+                <span><strong>Age Verification Required:</strong> Must prove age &ge; 18 before filing public safety reports.</span>
+              </div>
+              <button
+                type="button"
+                className="btn btn-primary btn-sm"
+                style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem' }}
+                onClick={() => navigate('/age-verify')}
+              >
+                Verify Age (ZK) &rarr;
+              </button>
+            </div>
+          )}
 
           <form className="report-form" onSubmit={handleSubmit} noValidate>
 

@@ -28,7 +28,14 @@ import type {
   SubmissionResult,
   VerificationResult,
   NetworkId,
+  AgeCredentialInput,
+  AgeVerificationResult,
 } from '@/types'
+import {
+  getStoredAgeVerification,
+  clearStoredAgeVerification,
+  submitAgeCredential as sdkSubmitAge,
+} from '@/api/ageVerification'
 import { DEFAULT_NETWORK_ID } from '@/config/networks'
 
 // ── Context shape ─────────────────────────────────────────────────────────────
@@ -58,6 +65,13 @@ interface AppContextValue {
   verifyReport:    (reportId: bigint) => Promise<VerificationResult | null>
   checkStatus:     (reportId: bigint) => Promise<void>
 
+  // Age Eligibility Verification (Module 3)
+  isAgeEligible:        boolean
+  ageVerification:      AgeVerificationResult | null
+  isVerifyingAge:       boolean
+  verifyAge:            (input: AgeCredentialInput) => Promise<AgeVerificationResult | null>
+  resetAgeVerification: () => void
+
   // Network
   networkId:       NetworkId
 }
@@ -76,6 +90,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [lastSubmission, setLastSubmission]   = useState<SubmissionResult | null>(null)
   const [isVerifying,   setIsVerifying]       = useState(false)
   const [lastVerification, setLastVerification] = useState<VerificationResult | null>(null)
+
+  // Module 3: Age Eligibility State
+  const [ageVerification, setAgeVerification] = useState<AgeVerificationResult | null>(() => getStoredAgeVerification())
+  const [isVerifyingAge, setIsVerifyingAge]   = useState(false)
+
+  const isAgeEligible = ageVerification?.isEligible ?? false
 
   const networkId: NetworkId =
     (walletInfo?.networkId ?? DEFAULT_NETWORK_ID) as NetworkId
@@ -196,6 +216,43 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, [networkId])
 
+  // ── Age verification actions (Module 3) ───────────────────────────────────
+
+  const verifyAge = useCallback(async (input: AgeCredentialInput): Promise<AgeVerificationResult | null> => {
+    setIsVerifyingAge(true)
+    const toastId = toast.loading('Generating ZK proof for age eligibility…', { icon: '🔐' })
+    try {
+      const result = await sdkSubmitAge(input, networkId)
+      setAgeVerification(result)
+      if (result.isEligible) {
+        toast.success('Age Eligibility Verified (18+) via Zero-Knowledge Proof! Identity remains completely hidden.', {
+          id: toastId,
+          duration: 7000,
+          icon: '✅',
+        })
+      } else {
+        toast.error('Age verification failed: User is under 18 years old. Public safety reporting access is restricted.', {
+          id: toastId,
+          duration: 7000,
+          icon: '❌',
+        })
+      }
+      return result
+    } catch (err) {
+      toast.error(`Age verification failed: ${err instanceof Error ? err.message : String(err)}`, { id: toastId })
+      return null
+    } finally {
+      setIsVerifyingAge(false)
+    }
+  }, [networkId])
+
+  const resetAgeVerification = useCallback(() => {
+    clearStoredAgeVerification()
+    setAgeVerification(null)
+    toast('Age verification credentials cleared', { icon: '🔄' })
+  }, [])
+
+
   const value: AppContextValue = {
     walletStatus, walletInfo, laceInstalled,
     connectWallet, disconnectWallet,
@@ -204,6 +261,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     isSubmitting, lastSubmission, submitReport,
     isVerifying, lastVerification, verifyReport,
     checkStatus,
+    isAgeEligible, ageVerification, isVerifyingAge, verifyAge, resetAgeVerification,
     networkId,
   }
 

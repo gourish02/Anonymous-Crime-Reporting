@@ -7,7 +7,7 @@ import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
   FileText, CheckCircle2, History, Sparkles, ShieldCheck,
-  Lock, ArrowRight, AlertTriangle, Eye, Shield
+  Lock, ArrowRight, AlertTriangle, Eye, Shield, ShieldAlert
 } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
 
@@ -19,6 +19,14 @@ const CRIME_SECTIONS = [
     icon: <FileText size={26} style={{ color: 'var(--blue)' }} />,
     color: 'var(--blue)',
     actionLabel: 'Submit Anonymously',
+  },
+  {
+    title: 'Age Eligibility (18+)',
+    desc: 'Prove you are at least 18 years old using Midnight zero-knowledge proofs before accessing report submission. DOB remains hidden.',
+    path: '/age-verify',
+    icon: <ShieldAlert size={26} style={{ color: 'var(--yellow)' }} />,
+    color: 'var(--yellow)',
+    actionLabel: 'Verify Age',
   },
   {
     title: 'Verify Incident Report',

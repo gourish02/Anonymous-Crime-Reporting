@@ -47,10 +47,32 @@ import CompactStandardLibrary;
 // 🛡️ PRIVACY REQUIREMENTS:
 //   The verification process MUST NEVER expose the private fields.
 //   Circuits return strictly one of the four allowed verification states:
-//     • VERIFIED
-//     • NOT VERIFIED
-//     • ACTIVE
-//     • EXPIRED
+// ─────────────────────────────────────────────────────────────────────────────
+// 🎂 MODULE 3: AGE ELIGIBILITY VERIFICATION (18+)
+// 🎯 PRIVACY GOAL:
+//   Prove that a user is at least 18 years old (age >= 18) before accessing
+//   public safety reporting features WITHOUT exposing their actual age,
+//   date of birth, government ID, or personal information.
+//
+// 🔒 PRIVATE STATE (Witnesses — Local to User's Device):
+//   1. userAge           — Actual age in years (Uint<16>).
+//   2. dateOfBirth       — Birth date timestamp (Uint<64>).
+//   3. governmentIdHash  — Cryptographic hash of national identity document.
+//   4. userSecretSalt    — Blinding salt for identity commitment.
+//
+// 🌐 PUBLIC STATE (Ledger — On-Chain & Shared):
+//   1. eligibility_status — 0 = NOT ELIGIBLE, 1 = ELIGIBLE.
+//   2. timestamp          — Unix timestamp of verification.
+//
+// 🛡️ PRIVACY REQUIREMENTS:
+//   Never reveal:
+//     • Actual age
+//     • Date of birth
+//     • Government ID
+//     • Personal information
+//   Only reveal:
+//     • ELIGIBLE (1)
+//     • NOT ELIGIBLE (0)
 // =============================================================================
 
 // ── Structs ──────────────────────────────────────────────────────────────────
@@ -96,6 +118,24 @@ struct VolunteerAttestation {
   attested_at:  Uint<64>,   // Public Unix timestamp of issuance / attestation
   is_verified:  Boolean,    // Verified (true) / Not Verified (false)
   is_active:    Boolean     // Certification Active (true) / Expired (false)
+}
+
+/**
+ * AgeEligibilityRecord (Module 3)
+ *
+ * Publicly verifiable record for age eligibility verification.
+ * Notice: Contains ONLY public state variables:
+ *   - credential_id
+ *   - eligibility_status: 1 (ELIGIBLE) or 0 (NOT ELIGIBLE)
+ *   - is_eligible: Boolean
+ *   - timestamp
+ * Zero private fields (Actual age, Date of birth, Government ID, Personal info) are included.
+ */
+struct AgeEligibilityRecord {
+  credential_id:      Field,     // Unique public credential identifier
+  eligibility_status: Uint<8>,   // 0 = NOT ELIGIBLE, 1 = ELIGIBLE
+  is_eligible:        Boolean,   // Boolean shorthand: true = ELIGIBLE, false = NOT ELIGIBLE
+  timestamp:          Uint<64>   // Public Unix timestamp of verification
 }
 
 // ── Public State Variables (Ledger) ──────────────────────────────────────────
@@ -165,6 +205,41 @@ export ledger volunteer_timestamp: Map<Field, Uint<64>>;
 export ledger volunteer_count: Counter;
 export ledger active_volunteers_count: Counter;
 export ledger volunteer_credentials: Map<Bytes<32>, VolunteerAttestation>;
+
+// ── Module 3: Age Eligibility Verification Public State ──
+
+/**
+ * age_credential_count
+ * Auto-incrementing counter tracking total age credential proofs submitted.
+ */
+export ledger age_credential_count: Counter;
+
+/**
+ * age_eligibility_records
+ * Maps credential_id (Field) -> AgeEligibilityRecord.
+ * Stores ONLY public verification status (ELIGIBLE / NOT ELIGIBLE) and timestamp.
+ */
+export ledger age_eligibility_records: Map<Field, AgeEligibilityRecord>;
+
+/**
+ * age_eligibility_status
+ * Direct public ledger map from credential_id (Field) -> eligibility status code:
+ *   0 = NOT ELIGIBLE (age < 18)
+ *   1 = ELIGIBLE     (age >= 18)
+ */
+export ledger age_eligibility_status: Map<Field, Uint<8>>;
+
+/**
+ * age_timestamp
+ * Direct public ledger map from credential_id (Field) -> Unix timestamp (Uint<64>).
+ */
+export ledger age_timestamp: Map<Field, Uint<64>>;
+
+/**
+ * eligible_users_count
+ * Aggregate counter tracking total verified eligible users (age >= 18).
+ */
+export ledger eligible_users_count: Counter;
 
 // ── Private State Variables (Witnesses) ───────────────────────────────────────
 // These functions supply private witnesses during local ZK proof generation.
@@ -246,6 +321,39 @@ witness phoneNumber(): Bytes<32>;
  * Evaluated inside local circuit to determine ACTIVE vs EXPIRED without leaking date.
  */
 witness expiryDate(): Uint<64>;
+
+// ── Module 3 Witnesses: Age Eligibility Verification ──
+// These private witnesses supply the user's age credentials locally.
+// They NEVER leave the user's device and are NEVER stored in ledger state.
+
+/**
+ * 1. userAge
+ * Private witness supplying the user's actual age in years.
+ * Evaluated strictly in local circuit memory to prove age >= 18.
+ * NEVER exposed on-chain or revealed to observers.
+ */
+witness userAge(): Uint<16>;
+
+/**
+ * 2. dateOfBirth
+ * Private witness supplying user's birth date timestamp.
+ * Stays strictly on user's device; never exposed on-chain.
+ */
+witness dateOfBirth(): Uint<64>;
+
+/**
+ * 3. governmentIdHash
+ * Private witness supplying cryptographic digest of user's national ID / driver's license.
+ * Stays strictly on user's device; never exposed on-chain.
+ */
+witness governmentIdHash(): Bytes<32>;
+
+/**
+ * 4. userSecretSalt
+ * Private witness providing blinding salt for identity commitment.
+ * Stays strictly on user's device; never exposed on-chain.
+ */
+witness userSecretSalt(): Bytes<32>;
 
 // =============================================================================
 // MODULE 1 CIRCUITS: ANONYMOUS CRIME REPORTING
@@ -674,4 +782,146 @@ export circuit getVolunteerStatus(commitment: Bytes<32>): Boolean {
   assert volunteer_credentials.member(commitment) "Volunteer credential commitment not found on-chain";
   const att: VolunteerAttestation = volunteer_credentials.lookup(commitment);
   return att.is_verified && att.is_active;
+}
+
+// =============================================================================
+// MODULE 3 CIRCUITS: AGE ELIGIBILITY VERIFICATION (18+)
+// =============================================================================
+//
+// 🎯 PRIVACY GOAL:
+//   Prove that a user is at least 18 years old (age >= 18) before accessing
+//   public safety reporting features WITHOUT exposing actual age, date of birth,
+//   government ID, or personal information.
+//
+// 🔒 PRIVACY REQUIREMENTS:
+//   Never reveal:
+//     - Actual age
+//     - Date of birth
+//     - Government ID
+//     - Personal information
+//   Only reveal:
+//     - ELIGIBLE (1)
+//     - NOT ELIGIBLE (0)
+// =============================================================================
+
+/**
+ * Circuit 1: submitAgeCredential
+ *
+ * Submits an age verification proof using private witnesses.
+ * Proves in zero-knowledge whether age >= 18 without revealing actual age.
+ *
+ * 🔒 PRIVACY GUARANTEE:
+ *   Evaluates userAge() >= 18 in zero-knowledge. The actual age and personal data
+ *   are discarded immediately after constraint checking and NEVER stored on-chain.
+ *
+ * 🌐 PUBLIC STATE WRITTEN:
+ *   - eligibility_status: 1 (ELIGIBLE) or 0 (NOT ELIGIBLE)
+ *   - timestamp: Public Unix timestamp
+ *
+ * @param timestamp Public Unix timestamp of age verification submission.
+ * @return          Unique public credential_id assigned on-chain.
+ */
+export circuit submitAgeCredential(timestamp: Uint<64>): Field {
+  assert timestamp > 0 "Submission timestamp must be positive";
+
+  // 1. Evaluate private witnesses locally in zero-knowledge (never revealed)
+  const age: Uint<16>          = userAge();
+  const dob: Uint<64>          = dateOfBirth();
+  const govId: Bytes<32>       = governmentIdHash();
+  const salt: Bytes<32>        = userSecretSalt();
+
+  // 2. Validate cryptographic integrity constraints
+  assert govId != pad(32, "") "governmentIdHash witness must not be empty";
+  assert salt  != pad(32, "") "userSecretSalt witness must not be empty";
+  assert dob   > 0            "dateOfBirth witness must be positive";
+
+  // 3. Evaluate verification logic in zero knowledge: age >= 18
+  const is_eligible: Boolean = age >= 18;
+
+  // 4. Determine public eligibility status:
+  //    0 = NOT ELIGIBLE, 1 = ELIGIBLE
+  const status: Uint<8> = if (is_eligible) {
+    1 as Uint<8> // ELIGIBLE
+  } else {
+    0 as Uint<8> // NOT ELIGIBLE
+  };
+
+  // 5. Assign unique public credential ID
+  const cred_id: Field = age_credential_count as Field;
+
+  // 6. Update public state (Zero PII stored: no age, no DOB, no ID)
+  age_eligibility_records.insert(cred_id, AgeEligibilityRecord {
+    credential_id:      cred_id,
+    eligibility_status: status,
+    is_eligible:        is_eligible,
+    timestamp:          timestamp
+  });
+  age_eligibility_status.insert(cred_id, status);
+  age_timestamp.insert(cred_id, timestamp);
+
+  age_credential_count.increment(1);
+  if (is_eligible) {
+    eligible_users_count.increment(1);
+  }
+
+  return cred_id;
+}
+
+/**
+ * Circuit 2: verifyAgeEligibility
+ *
+ * Verifies the age eligibility of an existing credential record in zero knowledge.
+ *
+ * 🔒 PRIVACY GUARANTEE:
+ *   Evaluates the constraint (age >= 18) entirely within the zero-knowledge proof.
+ *   The verifier and public observers learn ONLY the binary eligibility outcome:
+ *     - 1 = ELIGIBLE
+ *     - 0 = NOT ELIGIBLE
+ *   Actual age, date of birth, and identity are NEVER exposed.
+ *
+ * @param credential_id Unique identifier of the age credential.
+ * @param current_time  Current Unix timestamp.
+ * @return              Eligibility status code (1 = ELIGIBLE, 0 = NOT ELIGIBLE).
+ */
+export circuit verifyAgeEligibility(credential_id: Field, current_time: Uint<64>): Uint<8> {
+  assert current_time > 0 "Current timestamp must be positive";
+  assert credential_id < age_credential_count as Field "Age credential does not exist on-chain";
+
+  const age: Uint<16> = userAge();
+  const is_eligible: Boolean = age >= 18;
+
+  const status: Uint<8> = if (is_eligible) {
+    1 as Uint<8> // ELIGIBLE
+  } else {
+    0 as Uint<8> // NOT ELIGIBLE
+  };
+
+  age_eligibility_records.insert(credential_id, AgeEligibilityRecord {
+    credential_id:      credential_id,
+    eligibility_status: status,
+    is_eligible:        is_eligible,
+    timestamp:          current_time
+  });
+  age_eligibility_status.insert(credential_id, status);
+  age_timestamp.insert(credential_id, current_time);
+
+  return status;
+}
+
+/**
+ * Circuit 3: getEligibilityStatus
+ *
+ * Read-only circuit returning the public eligibility status of an age credential.
+ *
+ * 🎯 RETURN VALUES:
+ *   Returns ONLY one of two states:
+ *     - 0: NOT ELIGIBLE
+ *     - 1: ELIGIBLE
+ *
+ * @param credential_id Unique identifier of the credential being queried.
+ * @return              Status code (Uint<8>): 0 = NOT ELIGIBLE, 1 = ELIGIBLE.
+ */
+export circuit getEligibilityStatus(credential_id: Field): Uint<8> {
+  assert credential_id < age_credential_count as Field "Age credential does not exist on-chain";
+  return age_eligibility_status.lookup(credential_id);
 }

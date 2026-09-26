@@ -205,3 +205,45 @@ export interface VolunteerVerificationResult {
   }
 }
 
+// ── Module 3: Age Eligibility Verification Types ──────────────────────────────
+
+export type AgeEligibilityStatus = 'ELIGIBLE' | 'NOT ELIGIBLE'
+
+export const AGE_STATUS_CODES: Record<number, AgeEligibilityStatus> = {
+  0: 'NOT ELIGIBLE',
+  1: 'ELIGIBLE',
+}
+
+/** Private witness fields entered by user (held strictly in local device memory) */
+export interface AgeCredentialInput {
+  dateOfBirth:      string  // ISO date string (e.g. "2000-01-15") -> evaluated locally
+  governmentId:     string  // Private witness: ID number / driver's license
+  fullName:         string  // Private witness: legal name
+  identitySalt?:    string  // Private witness: secret blinding salt
+}
+
+/** Mirrors on-chain AgeEligibilityRecord struct */
+export interface AgeEligibilityRecord {
+  credentialId:      bigint
+  eligibilityStatus: AgeEligibilityStatus
+  statusCode:        number
+  isEligible:        boolean
+  timestamp:         number
+}
+
+/** Full age verification result returned to the UI */
+export interface AgeVerificationResult {
+  credentialId:        bigint
+  isEligible:          boolean
+  status:              AgeEligibilityStatus
+  statusCode:          number
+  timestamp:           number
+  proof:               ProofMetadata
+  selectiveDisclosure: {
+    revealed: {
+      eligibilityStatus: AgeEligibilityStatus
+    }
+    hiddenPrivateFields: string[]
+  }
+}
+
