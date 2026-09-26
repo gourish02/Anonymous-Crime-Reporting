@@ -1,35 +1,37 @@
-name: CI — Build, Lint & Type-check
+name: CI/CD Pipeline
 
 on:
   push:
-    branches: [main, develop]
+    branches: ['**']
   pull_request:
-    branches: [main]
+    branches: ['**']
 
 jobs:
-  ci:
-    name: Build & Lint
+  # ── Job 1: Frontend & Midnight DApp (Build, Type-Check, Lint & Tests) ───────
+  frontend-ci:
+    name: Frontend Build & Test
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Setup Node.js 20
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm'
 
       - name: Install dependencies
         run: npm install
 
-      - name: TypeScript type-check
+      - name: TypeScript strict compiler check
         run: npm run type-check
 
-      - name: Lint
-        run: npm run lint || echo "Lint warnings allowed in CI"
+      - name: Code quality lint check
+        run: npm run lint || echo "Lint warnings permitted in CI"
 
-      - name: Run Midnight Test Suite
+      - name: Execute Midnight DApp test suite
         run: npm test
 
       - name: Build production bundle
@@ -46,57 +48,62 @@ jobs:
           path: dist/
           retention-days: 7
 
-  # ── Compact contract lint & tests ─────────────────────────────────────────
-  contract-check:
-    name: Compact Contract Check
+  # ── Job 2: Midnight Compact Smart Contract (Circuits & Tests) ───────────────
+  contract-ci:
+    name: Compact Contract & Circuit Tests
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Verify contract file exists and is non-empty
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Verify Compact contract exists and is non-empty
         run: |
           test -s contract/src/crime_report.compact && \
-          echo "✅ Contract file present and non-empty" || \
-          (echo "❌ Contract file missing or empty" && exit 1)
+          echo "✅ Compact contract file verified" || \
+          (echo "❌ Compact contract file missing or empty" && exit 1)
 
-      - name: Check contract syntax (basic)
+      - name: Validate Compact circuits & ledger syntax
         run: |
           grep -qE "export circuit (submit_report|submitCrimeReport)" contract/src/crime_report.compact && \
-          grep -q "export ledger"                                      contract/src/crime_report.compact && \
-          echo "✅ Required contract circuits present"
+          grep -q "export circuit submitVolunteerCredential" contract/src/crime_report.compact && \
+          grep -q "export circuit verifyVolunteerCredential" contract/src/crime_report.compact && \
+          grep -q "export ledger" contract/src/crime_report.compact && \
+          echo "✅ All required Module 1 & Module 2 circuits present"
 
-      - name: Run Midnight Compact Contract Test Suite
+      - name: Execute Midnight Compact contract test suite
         run: node contract/test/crime_report.contract-test.mjs
 
-  # ── Python AI Crime Classifier Check ───────────────────────────────────────
-  ai-backend-check:
-    name: AI Classifier & FastAPI Check
+  # ── Job 3: Python AI Crime Classifier & FastAPI Service ─────────────────────
+  ai-backend-ci:
+    name: AI Classifier & Backend Tests
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+          cache: 'pip'
 
-      - name: Install dependencies
+      - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r backend/requirements.txt
 
-      - name: Run training pipeline
-        run: |
-          python backend/train.py
+      - name: Run Scikit-Learn training pipeline
+        run: python backend/train.py
 
-      - name: Run ML classifier unit tests
-        run: |
-          python backend/test_classifier.py
+      - name: Execute ML classifier unit tests
+        run: python backend/test_classifier.py
 
-      - name: Run FastAPI integration tests
-        run: |
-          python backend/test_api.py
+      - name: Execute FastAPI integration tests
+        run: python backend/test_api.py

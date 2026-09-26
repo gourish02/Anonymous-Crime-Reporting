@@ -8,9 +8,10 @@
 >
 > Mathematical zero-knowledge proofs guarantee reporter and volunteer identities are **impossible to reveal**.
 
-[![CI](https://github.com/gourish02/Anonymous-Crime-Reporting/actions/workflows/ci.yml/badge.svg)](https://github.com/gourish02/Anonymous-Crime-Reporting/actions/workflows/ci.yml)
+[![CI/CD Pipeline](https://github.com/gourish02/Anonymous-Crime-Reporting/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/gourish02/Anonymous-Crime-Reporting/actions/workflows/ci.yml)
+[![Tests Passing](https://img.shields.io/badge/Tests-Passing%20(24%2F24)-brightgreen)](https://github.com/gourish02/Anonymous-Crime-Reporting/actions/workflows/ci.yml)
 [![Deploy Contract](https://github.com/gourish02/Anonymous-Crime-Reporting/actions/workflows/deploy-contract.yml/badge.svg)](https://github.com/gourish02/Anonymous-Crime-Reporting/actions/workflows/deploy-contract.yml)
-[![Midnight Network](https://img.shields.io/badge/Network-Preprod-green)](https://midnight.network)
+[![Midnight Network](https://img.shields.io/badge/Network-Preprod%20(testnet--02)-green)](https://midnight.network)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
