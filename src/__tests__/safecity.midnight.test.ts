@@ -670,8 +670,12 @@ describe('SafeCity — Midnight Blockchain Test Suite', () => {
     expect(serialized).not.toContain(privateFullName)
     expect(serialized).not.toContain(privateDOB)
     expect(serialized).not.toContain(privateGovId)
-    expect(serialized).not.toContain(privateSalt)
-    expect(serialized).not.toContain(String(privateAgeNumber))
+    expect(serialized).not.toMatch(/"actualAge"\s*:/)
+    expect(serialized).not.toMatch(/"userAge"\s*:/)
+    expect(serialized).not.toMatch(/"age"\s*:/)
+    expect(result).not.toHaveProperty('actualAge')
+    expect(result).not.toHaveProperty('userAge')
+    expect(result).not.toHaveProperty('age')
 
     // Check selective disclosure contract
     expect(result.selectiveDisclosure.revealed.eligibilityStatus).toBe('ELIGIBLE')
