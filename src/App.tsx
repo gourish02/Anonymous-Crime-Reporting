@@ -7,11 +7,15 @@ import { AppProvider } from '@/context/AppContext'
 import { Layout }     from '@/components/Layout'
 import { HomePage }           from '@/pages/HomePage'
 import { ConnectWalletPage }  from '@/pages/ConnectWalletPage'
+import { CrimeReportingPortalPage } from '@/pages/CrimeReportingPortalPage'
 import { SubmitReportPage }   from '@/pages/SubmitReportPage'
 import { VerificationPage }   from '@/pages/VerificationPage'
 import { ReportHistoryPage }  from '@/pages/ReportHistoryPage'
 import { AIClassifierPage }   from '@/pages/AIClassifierPage'
 import { VolunteerVerificationPage } from '@/pages/VolunteerVerificationPage'
+import { CredentialSubmissionPage }  from '@/pages/CredentialSubmissionPage'
+import { VerificationResultPage }     from '@/pages/VerificationResultPage'
+import { PublicStatisticsDashboardPage } from '@/pages/PublicStatisticsDashboardPage'
 
 export default function App() {
   return (
@@ -19,15 +23,23 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route element={<Layout />}>
-            <Route index              element={<HomePage />}          />
-            <Route path="/connect"    element={<ConnectWalletPage />} />
-            <Route path="/submit"     element={<SubmitReportPage />}  />
-            <Route path="/verify"     element={<VerificationPage />}  />
-            <Route path="/history"    element={<ReportHistoryPage />} />
-            <Route path="/classifier" element={<AIClassifierPage />}  />
-            <Route path="/volunteer"  element={<VolunteerVerificationPage />} />
+            <Route index                     element={<HomePage />}                       />
+            <Route path="/connect"           element={<ConnectWalletPage />}              />
+            {/* Crime Reporting module pages */}
+            <Route path="/crime"             element={<CrimeReportingPortalPage />}       />
+            <Route path="/submit"            element={<SubmitReportPage />}               />
+            <Route path="/verify"            element={<VerificationPage />}               />
+            <Route path="/history"           element={<ReportHistoryPage />}              />
+            <Route path="/classifier"        element={<AIClassifierPage />}               />
+            {/* Confidential Volunteer Verification module pages */}
+            <Route path="/volunteer"         element={<VolunteerVerificationPage />}      />
+            <Route path="/volunteer/verify"  element={<VolunteerVerificationPage />}      />
+            <Route path="/volunteer/submit"  element={<CredentialSubmissionPage />}       />
+            <Route path="/volunteer/result"  element={<VerificationResultPage />}         />
+            {/* Public Statistics Dashboard */}
+            <Route path="/dashboard"         element={<PublicStatisticsDashboardPage />}  />
             {/* Catch-all */}
-            <Route path="*"           element={<Navigate to="/" replace />} />
+            <Route path="*"                  element={<Navigate to="/" replace />}        />
           </Route>
         </Routes>
       </BrowserRouter>

@@ -73,6 +73,23 @@
 
 ---
 
+## 🧭 Navigation & Page Structure
+
+SafeCity features a modern, responsive navigation bar with the 4 primary destinations:
+- **Home (`/`)**: Dual-module landing dashboard, live platform telemetry, and fast action launchpads.
+- **Crime Reporting (`/crime`)**: Whistleblower crime portal, preserving all existing reporting workflows:
+  - **Submit Crime Report (`/submit`)**: Private witness inputs, AI crime classifier assistant, and ZK proof generation.
+  - **Crime Report Verification (`/verify`)**: Check public ledger verification status and corroborated attestations.
+  - **Report History (`/history`)**: Real-time ledger history and citizen corroboration upvotes.
+  - **AI Threat Classifier Lab (`/classifier`)**: Scikit-Learn ML threat categorization lab with probability distributions.
+- **Volunteer Verification (`/volunteer`)**: Confidential credential verification hub with selective disclosure:
+  - **Credential Submission (`/volunteer/submit`)**: Private witness inputs (Name, ID, Address, Certificate No., Contact, Expiry) hashed locally into a commitment without exposing PII.
+  - **Volunteer Verification (`/volunteer/verify`)**: Zero-knowledge proof verification evaluating eligibility and expiration against the Midnight ledger.
+  - **Verification Result (`/volunteer/result`)**: Clear proof certificate displaying **`✓ Verified Volunteer`** and `ACTIVE` / `EXPIRED` status without leaking any private attributes.
+- **Dashboard (`/dashboard`)**: Comprehensive Public Statistics Dashboard with cross-module analytics, category distribution meters, volunteer certification health, and Preprod testnet status.
+
+---
+
 ## 📸 Screenshots
 
 | 1. SafeCity Dashboard & Platform Telemetry | 2. Submit Crime Report with AI Assistant |
@@ -213,15 +230,19 @@ anonymous-crime-reporting-dapp/
 │   ├── components/                 # UI components, Navbar, AICrimeAssistant
 │   ├── config/                     # Network configurations (Preprod & Devnet)
 │   ├── context/                    # AppContext global state & wallet hooks
-│   ├── pages/                      # Home, Submit, Verify, Volunteer, History, Classifier
+│   ├── pages/                      # Upgraded multi-module pages & dashboards
 │   │   ├── HomePage.tsx            # SafeCity dual-module landing dashboard
-│   │   ├── VolunteerVerificationPage.tsx # Module 2 Prover, Verifier & Ledger Directory
+│   │   ├── CrimeReportingPortalPage.tsx # Crime Reporting portal & sub-navigation
 │   │   ├── SubmitReportPage.tsx    # Anonymous crime submission form
 │   │   ├── VerificationPage.tsx    # Crime report verification
 │   │   ├── ClassifierPage.tsx      # AI classifier lab
-│   │   └── HistoryPage.tsx         # Ledger history
+│   │   ├── HistoryPage.tsx         # Ledger history
+│   │   ├── VolunteerVerificationPage.tsx # Volunteer Verification portal & tabs
+│   │   ├── CredentialSubmissionPage.tsx # Confidential Credential Submission form
+│   │   ├── VerificationResultPage.tsx # Verification Result ('✓ Verified Volunteer')
+│   │   └── PublicStatisticsDashboardPage.tsx # Public Statistics Dashboard
 │   ├── types/                      # Shared TypeScript definitions
-│   ├── App.tsx                     # React Router v6 routing
+│   ├── App.tsx                     # React Router v6 routing (Home, Crime, Volunteer, Dashboard)
 │   ├── index.css                   # Catppuccin Mocha design system
 │   └── main.tsx                    # React application entry point
 ├── .env.example                    # Environment variables template

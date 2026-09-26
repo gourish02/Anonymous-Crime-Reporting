@@ -254,37 +254,58 @@ export function VolunteerVerificationPage() {
         </div>
       </motion.div>
 
-      {/* Tabs */}
-      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '0.5rem' }}>
-        <button
-          type="button"
-          className={`btn ${activeTab === 'prove' ? 'btn-primary' : 'btn-ghost'}`}
-          onClick={() => setActiveTab('prove')}
-          style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.9rem' }}
-        >
-          <Award size={16} />
-          Volunteer Prover (Holders)
-        </button>
+      {/* Tabs & Quick Navigation */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '0.5rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <button
+            type="button"
+            className={`btn ${activeTab === 'verifier' ? 'btn-primary' : 'btn-ghost'}`}
+            onClick={() => setActiveTab('verifier')}
+            style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.9rem' }}
+          >
+            <Search size={16} />
+            Public Verifier Portal
+          </button>
 
-        <button
-          type="button"
-          className={`btn ${activeTab === 'verifier' ? 'btn-primary' : 'btn-ghost'}`}
-          onClick={() => setActiveTab('verifier')}
-          style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.9rem' }}
-        >
-          <Search size={16} />
-          Public Verifier Portal
-        </button>
+          <button
+            type="button"
+            className={`btn ${activeTab === 'prove' ? 'btn-primary' : 'btn-ghost'}`}
+            onClick={() => setActiveTab('prove')}
+            style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.9rem' }}
+          >
+            <Award size={16} />
+            Volunteer Prover
+          </button>
 
-        <button
-          type="button"
-          className={`btn ${activeTab === 'directory' ? 'btn-primary' : 'btn-ghost'}`}
-          onClick={() => setActiveTab('directory')}
-          style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.9rem' }}
-        >
-          <FileText size={16} />
-          Ledger Directory
-        </button>
+          <button
+            type="button"
+            className={`btn ${activeTab === 'directory' ? 'btn-primary' : 'btn-ghost'}`}
+            onClick={() => setActiveTab('directory')}
+            style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.9rem' }}
+          >
+            <FileText size={16} />
+            Ledger Directory
+          </button>
+        </div>
+
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <button
+            type="button"
+            className="btn btn-outline btn-sm"
+            onClick={() => navigate('/volunteer/submit')}
+            style={{ display: 'flex', alignItems: 'center', gap: '5px' }}
+          >
+            <UserCheck size={14} /> Submit Credential
+          </button>
+          <button
+            type="button"
+            className="btn btn-ghost btn-sm"
+            onClick={() => navigate('/volunteer/result')}
+            style={{ display: 'flex', alignItems: 'center', gap: '5px' }}
+          >
+            <CheckCircle2 size={14} /> Latest Result
+          </button>
+        </div>
       </div>
 
       {/* TAB 1: VOLUNTEER PROVER */}

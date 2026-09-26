@@ -9,7 +9,7 @@ import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
   ShieldCheck, FileText, CheckCircle, History,
-  Lock, Eye, Zap, ArrowRight, Users, Sparkles, UserCheck, ShieldAlert, BadgeCheck
+  Lock, Eye, Zap, ArrowRight, Users, Sparkles, UserCheck, ShieldAlert, BadgeCheck, BarChart3,
 } from 'lucide-react'
 import { useApp } from '@/context/AppContext'
 import { getAllAttestedVolunteers } from '@/api/volunteer'
@@ -24,9 +24,9 @@ const PLATFORM_MODULES = [
     icon: <FileText size={28} />,
     color: 'var(--blue)',
     links: [
-      { label: 'Submit Report', to: '/submit', primary: true },
+      { label: 'Crime Portal', to: '/crime', primary: true },
+      { label: 'Submit Report', to: '/submit', primary: false },
       { label: 'AI Classifier', to: '/classifier', primary: false },
-      { label: 'Ledger History', to: '/history', primary: false },
     ],
     features: [
       'Lace Wallet ZK transaction signing',
@@ -43,8 +43,9 @@ const PLATFORM_MODULES = [
     icon: <UserCheck size={28} />,
     color: 'var(--green)',
     links: [
-      { label: 'Volunteer Prover', to: '/volunteer', primary: true },
-      { label: 'Public Verifier', to: '/volunteer?tab=verifier', primary: false },
+      { label: 'Submit Credential', to: '/volunteer/submit', primary: true },
+      { label: 'Verify Volunteer', to: '/volunteer/verify', primary: false },
+      { label: 'Public Statistics', to: '/dashboard', primary: false },
     ],
     features: [
       'Hides 5 sensitive PII attributes completely',
@@ -165,14 +166,14 @@ export function HomePage() {
               whileTap={{ scale: 0.97 }}
             >
               <UserCheck size={18} />
-              Verify Volunteer Credentials
+              Volunteer Verification
             </motion.button>
 
             <button
               className="btn btn-ghost btn-lg"
-              onClick={() => navigate('/classifier')}
+              onClick={() => navigate('/dashboard')}
             >
-              <Sparkles size={18} /> AI Classifier
+              <BarChart3 size={18} /> Public Statistics
             </button>
           </div>
 

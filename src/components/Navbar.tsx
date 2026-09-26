@@ -6,20 +6,17 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   ShieldCheck, Home, Wallet, FileText,
-  CheckCircle, History, Power, Loader2, Menu, X, Sparkles, UserCheck,
+  CheckCircle, History, Power, Loader2, Menu, X, Sparkles, UserCheck, BarChart3,
 } from 'lucide-react'
 import { useState } from 'react'
 import { useApp } from '@/context/AppContext'
 import clsx from 'clsx'
 
 const NAV_LINKS = [
-  { to: '/',           label: 'Home',             icon: <Home        size={16} /> },
-  { to: '/classifier', label: 'AI Classifier',    icon: <Sparkles    size={16} /> },
-  { to: '/submit',     label: 'Submit',           icon: <FileText    size={16} /> },
-  { to: '/verify',     label: 'Verify',           icon: <CheckCircle size={16} /> },
-  { to: '/volunteer',  label: 'Volunteers',       icon: <UserCheck   size={16} /> },
-  { to: '/history',    label: 'History',          icon: <History     size={16} /> },
-  { to: '/connect',    label: 'Wallet',           icon: <Wallet      size={16} /> },
+  { to: '/',           label: 'Home',                    icon: <Home        size={16} /> },
+  { to: '/crime',      label: 'Crime Reporting',         icon: <FileText    size={16} /> },
+  { to: '/volunteer',  label: 'Volunteer Verification',  icon: <UserCheck   size={16} /> },
+  { to: '/dashboard',  label: 'Dashboard',               icon: <BarChart3   size={16} /> },
 ]
 
 export function Navbar() {
