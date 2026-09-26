@@ -6,19 +6,20 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   ShieldCheck, Home, Wallet, FileText,
-  CheckCircle, History, Power, Loader2, Menu, X, Sparkles,
+  CheckCircle, History, Power, Loader2, Menu, X, Sparkles, UserCheck,
 } from 'lucide-react'
 import { useState } from 'react'
 import { useApp } from '@/context/AppContext'
 import clsx from 'clsx'
 
 const NAV_LINKS = [
-  { to: '/',           label: 'Home',          icon: <Home        size={16} /> },
-  { to: '/classifier', label: 'AI Classifier', icon: <Sparkles    size={16} /> },
-  { to: '/submit',     label: 'Submit',        icon: <FileText    size={16} /> },
-  { to: '/verify',     label: 'Verify',        icon: <CheckCircle size={16} /> },
-  { to: '/history',    label: 'History',       icon: <History     size={16} /> },
-  { to: '/connect',    label: 'Wallet',        icon: <Wallet      size={16} /> },
+  { to: '/',           label: 'Home',             icon: <Home        size={16} /> },
+  { to: '/classifier', label: 'AI Classifier',    icon: <Sparkles    size={16} /> },
+  { to: '/submit',     label: 'Submit',           icon: <FileText    size={16} /> },
+  { to: '/verify',     label: 'Verify',           icon: <CheckCircle size={16} /> },
+  { to: '/volunteer',  label: 'Volunteers',       icon: <UserCheck   size={16} /> },
+  { to: '/history',    label: 'History',          icon: <History     size={16} /> },
+  { to: '/connect',    label: 'Wallet',           icon: <Wallet      size={16} /> },
 ]
 
 export function Navbar() {
@@ -41,7 +42,7 @@ export function Navbar() {
           <div className="brand-icon-sm">
             <ShieldCheck size={22} />
           </div>
-          <span className="brand-name-sm">CrimeShield</span>
+          <span className="brand-name-sm">SafeCity</span>
         </button>
 
         {/* Desktop nav links */}

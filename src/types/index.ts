@@ -147,3 +147,41 @@ export interface VerificationResult {
   proof:       ProofMetadata
   privacyClaim: string
 }
+
+// ── Module 2: Confidential Volunteer Verification Types ───────────────────────
+
+/** Private fields entered by volunteer (held strictly in local witness memory) */
+export interface VolunteerCredentialInput {
+  name:              string   // Private witness: legal name
+  volunteerId:       string   // Private witness: volunteer ID
+  address:           string   // Private witness: residential address
+  certificateNumber: string   // Private witness: certification / license number
+  contactInfo:       string   // Private witness: phone / email
+  expirationDate:    string   // ISO date string -> parsed to unix timestamp for private witness
+  organization:      string   // Issuing agency / squad
+  role:              string   // Assigned role / badge
+}
+
+/** Mirrors on-chain VolunteerAttestation struct */
+export interface OnChainVolunteerAttestation {
+  commitment: string
+  attestedAt: number
+  isVerified: boolean         // Selective disclosure: Verified / Not Verified
+  isActive:   boolean         // Selective disclosure: Certification Active / Expired
+}
+
+/** Full verification result returned to the UI */
+export interface VolunteerVerificationResult {
+  commitment:          string
+  isVerified:          boolean
+  isActive:            boolean
+  attestedAt:          number
+  proof:               ProofMetadata
+  selectiveDisclosure: {
+    revealed: {
+      verificationStatus: 'Verified' | 'Not Verified'
+      certificationState: 'Certification Active' | 'Certification Expired'
+    }
+    hiddenPrivateFields: string[]
+  }
+}

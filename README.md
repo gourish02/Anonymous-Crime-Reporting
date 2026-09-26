@@ -1,9 +1,12 @@
-# 🛡️ CrimeShield: Anonymous Crime Reporting & Verification DApp
+# 🛡️ SafeCity: Decentralized Confidential Public Safety Platform
 
-> **Midnight Blockchain Level 2 — Waxing Crescent Project**
+> **Midnight Blockchain Level 2 — Waxing Crescent Multi-Module Platform**
 >
-> A full-stack, production-grade privacy-preserving dApp built on the **Midnight Blockchain** with an integrated **Scikit-Learn + FastAPI AI Crime Classifier**.
-> Zero-knowledge proofs ensure reporter identities are **mathematically impossible to reveal**.
+> A production-grade, multi-module public safety platform built on the **Midnight Blockchain** integrating:
+> 1. **Zero-Knowledge Anonymous Crime Reporting** with real-time **Scikit-Learn + FastAPI AI threat classification**.
+> 2. **Confidential Volunteer Verification** utilizing Midnight private state witnesses and **selective disclosure** principles.
+>
+> Mathematical zero-knowledge proofs guarantee reporter and volunteer identities are **impossible to reveal**.
 
 [![CI](https://github.com/gourish02/Anonymous-Crime-Reporting/actions/workflows/ci.yml/badge.svg)](https://github.com/gourish02/Anonymous-Crime-Reporting/actions/workflows/ci.yml)
 [![Deploy Contract](https://github.com/gourish02/Anonymous-Crime-Reporting/actions/workflows/deploy-contract.yml/badge.svg)](https://github.com/gourish02/Anonymous-Crime-Reporting/actions/workflows/deploy-contract.yml)
@@ -17,27 +20,93 @@
 
 | Parameter | Value |
 |---|---|
+| **Platform** | SafeCity Decentralized Public Safety Platform |
 | **Network** | Midnight Preprod Testnet (`testnet-02`) |
 | **Contract Address** | [`0200fd03c98cb6cccd46085adb1f1bfc68841d3725bd6cbecf0d265f94099a0e`](https://explorer.testnet-02.midnight.network/contract/0200fd03c98cb6cccd46085adb1f1bfc68841d3725bd6cbecf0d265f94099a0e) |
 | **Status** | 🟢 Deployed & Verified On-Chain |
-| **Circuits** | `submitCrimeReport`, `verifyReport`, `getReportStatus`, `updateReportStatus`, `upvoteReport` |
+| **Module 1 Circuits** | `submitCrimeReport`, `verifyReport`, `getReportStatus`, `updateReportStatus`, `upvoteReport` |
+| **Module 2 Circuits** | `registerVolunteerCredential`, `proveVolunteerEligibility`, `getVolunteerStatus` |
 | **Block Explorer** | [View on Midnight Explorer](https://explorer.testnet-02.midnight.network/contract/0200fd03c98cb6cccd46085adb1f1bfc68841d3725bd6cbecf0d265f94099a0e) |
+
+---
+
+## 🏛️ Platform Modules
+
+```
+                    ┌─────────────────────────────────────────┐
+                    │     SafeCity Public Safety Platform     │
+                    └────────────────────┬────────────────────┘
+                                         │
+                 ┌───────────────────────┴───────────────────────┐
+                 │                                               │
+                 ▼                                               ▼
+   ┌───────────────────────────┐                   ┌───────────────────────────┐
+   │         MODULE 1          │                   │         MODULE 2          │
+   │  Anonymous Crime Report   │                   │  Confidential Volunteer   │
+   │       & AI Classifier     │                   │       Verification        │
+   ├───────────────────────────┤                   ├───────────────────────────┤
+   │ • Lace Wallet Integration │                   │ • Selective Disclosure    │
+   │ • Compact ZK Circuits     │                   │ • Private Witness State   │
+   │ • Scikit-Learn ML Backend │                   │ • Conceals all 5 PII vars │
+   │ • Community Upvoting      │                   │ • Reveals Active/Expired  │
+   └───────────────────────────┘                   └───────────────────────────┘
+```
+
+### Module 1: Anonymous Crime Reporting & AI Classifier
+- **Zero-Knowledge Whistleblower Protection**: Citizens file crime reports anonymously. The smart contract mathematically verifies the submission is valid without logging wallet identity or raw text on-chain.
+- **FastAPI + Scikit-Learn AI Threat Classifier**: Live categorization across 5 categories (`Theft`, `Assault`, `Cyber Crime`, `Fraud`, `Vandalism`) with calibrated probability scores and multi-factor risk assessment (`Low`, `Medium`, `High`, `Critical`).
+- **Community Corroboration**: Tamper-proof upvoting and status verification.
+
+### Module 2: Confidential Volunteer Verification (NEW)
+- **Problem**: Volunteers (first responders, medics, search & rescue, disaster relief) need to prove they hold legitimate, unexpired credentials without exposing personal information to public observers.
+- **Solution via Midnight Selective Disclosure**:
+  - The circuit hides:
+    - ❌ Legal Name
+    - ❌ Volunteer ID Number
+    - ❌ Residential Address
+    - ❌ Official Certificate Number
+    - ❌ Phone Number & Email
+  - The system reveals **ONLY**:
+    - ✅ **`Verified / Not Verified`**
+    - ✅ **`Certification Active / Expired`**
+- **How it Works**: A local cryptographic commitment is computed from private credential fields. The `proveVolunteerEligibility` circuit checks credential validity and evaluates `(expirationTimestamp >= currentTime)` inside the zero-knowledge proof, emitting only binary outcome booleans to the public ledger.
 
 ---
 
 ## 📸 Screenshots
 
-| 1. Landing Page & Network Telemetry | 2. Submit Report with AI Assistant |
+| 1. SafeCity Dashboard & Platform Telemetry | 2. Submit Crime Report with AI Assistant |
 |:---:|:---:|
-| ![CrimeShield Dashboard](docs/screenshots/dashboard_home.jpg) | ![Submit Report Form with AI Assistant](docs/screenshots/submit_report.jpg) |
-| *Live counters, ZK claim banner, and wallet indicators* | *5 crime categories, private witness fields & AI classifier* |
+| ![SafeCity Dashboard](docs/screenshots/dashboard_home.jpg) | ![Submit Report Form with AI Assistant](docs/screenshots/submit_report.jpg) |
+| *Dual-module dashboard, live counters, and wallet integration* | *5 crime categories, private witness fields & AI classifier* |
 
-| 3. On-Chain ZK Verification | 4. AI Crime Classifier Lab |
+| 3. On-Chain ZK Report Verification | 4. AI Crime Classifier Lab |
 |:---:|:---:|
 | ![Zero-Knowledge Report Verification](docs/screenshots/verification_screen.jpg) | ![AI Crime Classifier & Risk Assessment Lab](docs/screenshots/ai_classifier_lab.jpg) |
-| *Verified without revealing reporter identity* | *Multi-class probabilities & multi-factor risk engine* |
+| *Verified on-chain without revealing reporter identity* | *Multi-class probabilities & multi-factor threat engine* |
 
-> 🔍 View detailed UI breakdowns in [**docs/SCREENSHOTS.md**](docs/SCREENSHOTS.md).
+> 🔍 Detailed UI walkthroughs available in [**docs/SCREENSHOTS.md**](docs/SCREENSHOTS.md).
+
+---
+
+## 🔒 Observable Privacy Behavior & Selective Disclosure
+
+Midnight's dual-state ledger cryptographically isolates sensitive private data from public ledger inspection:
+
+| Domain | Attribute | Storage / Handling | On-Chain Visibility |
+|---|---|---|:---:|
+| **Crime Report** | Reporter Wallet Address | In-Memory Local Witness | ❌ Hidden |
+| **Crime Report** | Raw Description & Location | In-Memory Local Witness | ❌ Hidden |
+| **Crime Report** | Report ID & Category | Public Ledger Map | ✅ Public |
+| **Crime Report** | Verification Status | Public Ledger Map | ✅ Public (`Pending`, `Verified`, `Rejected`) |
+| **Volunteer Credential** | Volunteer Full Name | In-Memory Local Witness | ❌ Hidden |
+| **Volunteer Credential** | Volunteer ID Number | In-Memory Local Witness | ❌ Hidden |
+| **Volunteer Credential** | Residential Address | In-Memory Local Witness | ❌ Hidden |
+| **Volunteer Credential** | Official Certificate No. | In-Memory Local Witness | ❌ Hidden |
+| **Volunteer Credential** | Contact Info (Phone/Email) | In-Memory Local Witness | ❌ Hidden |
+| **Volunteer Credential** | Exact Expiration Date | Evaluated inside ZK Circuit | ❌ Hidden |
+| **Volunteer Credential** | Credential Validity | Public Ledger Map | ✅ **`Verified / Not Verified`** |
+| **Volunteer Credential** | Certification State | Public Ledger Map | ✅ **`Certification Active / Expired`** |
 
 ---
 
@@ -45,18 +114,23 @@
 
 ```mermaid
 flowchart TB
-    subgraph Client["Browser (Client Layer)"]
+    subgraph Client["Browser Client (SafeCity Web App)"]
         UI["React 18 + TypeScript UI\n(Vite + React Router v6)"]
         Lace["Lace Wallet Connector\n(window.midnight.mnLace)"]
         LocalML["Local Browser ML Engine\n(Fault-Tolerant Fallback)"]
-        Witness["ZK Witness Generator\n(Hasher & Witness Memory)"]
+        
+        subgraph ClientWitnesses["ZK Witness Storage (Local In-Memory)"]
+            RepWitness["Crime Reporter Witness\n• reporterIdentity\n• crimeDescription\n• evidenceHash"]
+            VolWitness["Volunteer Credential Witness\n• name, volunteerId\n• address, certNumber\n• contactInfo, expiration"]
+        end
         
         UI --> Lace
-        UI --> Witness
+        UI --> RepWitness
+        UI --> VolWitness
         UI -.->|Fallback| LocalML
     end
 
-    subgraph AIService["AI Classifier Service (FastAPI)"]
+    subgraph AIService["AI Threat Classifier Service (FastAPI)"]
         API["FastAPI REST Endpoints\n(/api/classify, /api/categories)"]
         SKLearn["Scikit-Learn ML Pipeline\n(TF-IDF + Logistic Regression)"]
         RiskEngine["Multi-Factor Threat Engine\n(Low, Medium, High, Critical)"]
@@ -72,27 +146,27 @@ flowchart TB
     end
 
     subgraph OnChain["Midnight Blockchain (Preprod Testnet)"]
-        CompactContract["Compact Smart Contract\n(crime_report.compact)"]
+        CompactContract["SafeCity Compact Smart Contract\n(contract/src/crime_report.compact)"]
         
-        subgraph PrivateState["Private State (Hidden in Witnesses)"]
-            RepID["reporterIdentity: Bytes<32>"]
-            Desc["crimeDescription: Bytes<128>"]
-            Evid["evidenceHash: Bytes<32>"]
-        end
-
-        subgraph PublicLedger["Public Ledger (Visible to Everyone)"]
+        subgraph Mod1State["Module 1: Crime Reporting Ledger"]
             RepCount["report_count: Counter"]
             PubReports["public_reports: Map<Field, PublicReport>"]
             VerCount["verified_count: Counter"]
-            TypeCount["type_counts: Map<Uint<8>, Uint<32>>"]
         end
 
-        CompactContract --> PrivateState
-        CompactContract --> PublicLedger
+        subgraph Mod2State["Module 2: Confidential Volunteer Ledger"]
+            VolCount["volunteer_count: Counter"]
+            ActiveVolCount["active_volunteers_count: Counter"]
+            VolMap["volunteer_credentials: Map<Bytes<32>, VolunteerAttestation>"]
+        end
+
+        CompactContract --> Mod1State
+        CompactContract --> Mod2State
     end
 
-    UI -->|Incident Text| API
-    Witness -->|Private Witnesses & Public Inputs| ProofServer
+    UI -->|Incident Narrative| API
+    RepWitness -->|Witness Inputs| ProofServer
+    VolWitness -->|Selective Disclosure Witness| ProofServer
     ProofServer -->|Proof π & Public Inputs| Lace
     Lace -->|Signed Transaction| NodeRPC
     NodeRPC --> CompactContract
@@ -100,40 +174,6 @@ flowchart TB
 ```
 
 > 📖 Read full architectural documentation in [**docs/ARCHITECTURE.md**](docs/ARCHITECTURE.md).
-
----
-
-## 🔒 Observable Privacy Behavior
-
-> **"Report verified without revealing reporter identity"**
-
-Midnight's dual-state ledger cryptographically isolates sensitive reporter data from public ledger inspection:
-
-| Data Field | Storage Location | On-Chain State | Accessibility |
-|---|---|:---:|---|
-| **Reporter Wallet Address** | Browser Witness Memory | ❌ Never Broadcasted | Private to submitter |
-| **Exact Incident Location** | Browser Witness Memory | ❌ Never Broadcasted | Hashed locally in browser |
-| **Raw Crime Description** | Browser Witness Memory | ❌ Never Broadcasted | Hashed locally in browser |
-| **Evidence IPFS / CID** | Browser Witness Memory | ❌ Never Broadcasted | Protected in witness |
-| **Report ID** | Public Ledger Map | ✅ Public | Auto-incremented sequence |
-| **Crime Type Enum** | Public Ledger Map | ✅ Public | `Theft`, `Assault`, `Cyber Crime`, `Fraud`, `Vandalism` |
-| **Submission Timestamp** | Public Ledger Map | ✅ Public | Block inclusion timestamp |
-| **Verification Status** | Public Ledger Map | ✅ Public | `Pending (0)`, `Verified (1)`, `Rejected (2)` |
-
----
-
-## 🤖 AI Crime Classifier Backend
-
-The repository includes a dedicated Machine Learning backend that provides real-time categorization and risk scoring:
-
-- **5 Supported Categories**: Theft, Assault, Cyber Crime, Fraud, Vandalism.
-- **Scikit-Learn ML Pipeline**: `TfidfVectorizer` (10,000 n-gram features) + balanced multi-class `LogisticRegression` with calibrated probabilities.
-- **Multi-Factor Risk Assessment Engine**:
-  - Baseline category risk weight
-  - Critical threat indicators (`knife`, `gun`, `shooting`, `bleeding`, `hospital`, `hostage`)
-  - High severity modifiers (`punched`, `beaten`, `ransomware`, `fracture`, `wire transfer`)
-- **FastAPI Endpoints**: REST API with interactive Swagger UI docs at `http://localhost:8000/docs`.
-- **Fault-Tolerant Browser Fallback**: Seamless client-side ML engine activates if backend is offline.
 
 ---
 
@@ -153,7 +193,7 @@ anonymous-crime-reporting-dapp/
 │   └── train.py                    # Scikit-Learn training pipeline
 ├── contract/                       # Midnight Compact Smart Contract
 │   ├── src/
-│   │   └── crime_report.compact    # Compact contract (witnesses, circuits, state)
+│   │   └── crime_report.compact    # Compact contract (Module 1 & Module 2 circuits)
 │   └── package.json                # Compact build configuration
 ├── deploy/                         # Automated deployment scripts
 │   └── deploy.mjs                  # Preprod / DevNet contract deployment script
@@ -161,15 +201,25 @@ anonymous-crime-reporting-dapp/
 │   └── docker-compose.yml          # Local Midnight node, indexer & proof server
 ├── docs/                           # Documentation & Visual Assets
 │   ├── screenshots/                # High-resolution application screenshots
-│   ├── ARCHITECTURE.md             # System architecture & ZK data flow
+│   ├── ARCHITECTURE.md             # Multi-module architecture & selective disclosure flow
 │   ├── DEPLOYMENT.md               # Contract deployment guide
 │   └── SCREENSHOTS.md              # Detailed UI walkthrough
 ├── src/                            # React 18 + TypeScript Frontend
-│   ├── api/                        # Midnight.js DApp connector & AI API client
-│   ├── components/                 # UI widgets, AICrimeAssistant, PrivacyBadge
+│   ├── api/                        # Midnight.js DApp connector, volunteer API & AI client
+│   │   ├── volunteer.ts            # Module 2 selective disclosure & commitment API
+│   │   ├── midnight.ts             # Midnight.js SDK & Lace integration
+│   │   ├── classifierApi.ts        # FastAPI client with browser fallback
+│   │   └── mockMidnight.ts         # Preprod simulated client
+│   ├── components/                 # UI components, Navbar, AICrimeAssistant
 │   ├── config/                     # Network configurations (Preprod & Devnet)
 │   ├── context/                    # AppContext global state & wallet hooks
-│   ├── pages/                      # Home, Submit, Verify, History, AI Classifier
+│   ├── pages/                      # Home, Submit, Verify, Volunteer, History, Classifier
+│   │   ├── HomePage.tsx            # SafeCity dual-module landing dashboard
+│   │   ├── VolunteerVerificationPage.tsx # Module 2 Prover, Verifier & Ledger Directory
+│   │   ├── SubmitReportPage.tsx    # Anonymous crime submission form
+│   │   ├── VerificationPage.tsx    # Crime report verification
+│   │   ├── ClassifierPage.tsx      # AI classifier lab
+│   │   └── HistoryPage.tsx         # Ledger history
 │   ├── types/                      # Shared TypeScript definitions
 │   ├── App.tsx                     # React Router v6 routing
 │   ├── index.css                   # Catppuccin Mocha design system

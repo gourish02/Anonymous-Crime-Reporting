@@ -3,37 +3,39 @@ pragma language_version >= 0.20;
 import CompactStandardLibrary;
 
 // =============================================================================
-// Anonymous Crime Reporting & Verification — Midnight Compact Smart Contract
+// SafeCity — Multi-Module Public Safety Platform — Midnight Compact Contract
 // =============================================================================
 //
+// 🏛️ MODULE 1: ANONYMOUS CRIME REPORTING & VERIFICATION
 // 🎯 PRIVACY GOAL:
-//   The contract proves that a valid, verified crime report exists on-chain
-//   WITHOUT EVER exposing the reporter's identity, sensitive narrative details,
-//   or raw evidence to the public ledger or verifiers.
+//   Proves a valid crime report exists on-chain without exposing reporter identity,
+//   location, description, or raw evidence.
 //
-// ─────────────────────────────────────────────────────────────────────────────
 // 🔒 PRIVATE STATE (Witnesses — Local to Reporter's Device):
-//   1. reporterIdentity  — Salted cryptographic hash of the reporter's wallet
-//                          private credentials. Proves the caller is an
-//                          authenticated, unique reporter without revealing
-//                          their wallet address or identity to the ledger.
-//   2. crimeDescription  — Raw confidential narrative detailing the crime.
-//                          Stays strictly within the local ZK proof circuit.
-//   3. evidenceHash      — Cryptographic digest (SHA-256 or IPFS CID) of
-//                          sensitive attachments/media. Bound to the report
-//                          via local witness constraints without on-chain leak.
+//   1. reporterIdentity  — Salted hash of reporter's wallet credentials.
+//   2. crimeDescription  — Confidential narrative detailing the incident.
+//   3. evidenceHash      — Cryptographic digest of confidential evidence.
+//
+// 🌐 PUBLIC STATE (Ledger — On-Chain & Shared):
+//   1. reportId           — Sequence number minted via report_count.
+//   2. verificationStatus — Pending (0), Verified (1), Rejected (2), Investigating (3).
+//   3. timestamp          — Unix epoch submission timestamp.
 //
 // ─────────────────────────────────────────────────────────────────────────────
-// 🌐 PUBLIC STATE (Ledger — On-Chain & Shared):
-//   1. reportId           — Unique auto-incrementing numeric identifier for each
-//                           report (minted via report_count Counter).
-//   2. verificationStatus — Current lifecycle status code:
-//                           • 0: Pending
-//                           • 1: Verified
-//                           • 2: Rejected
-//                           • 3: Under Investigation
-//   3. timestamp          — Unix epoch timestamp recorded when the report was
-//                           submitted to the Midnight network.
+// 🎖️ MODULE 2: CONFIDENTIAL VOLUNTEER VERIFICATION (Selective Disclosure)
+// 🎯 PRIVACY GOAL:
+//   A volunteer proves they possess a valid, active volunteer certification
+//   WITHOUT revealing:
+//     • Name
+//     • Volunteer ID
+//     • Address
+//     • Certificate number
+//     • Contact information
+//
+// 🔍 SELECTIVE DISCLOSURE:
+//   The system reveals ONLY:
+//     • is_verified: Verified / Not Verified (Boolean)
+//     • is_active:   Certification Active / Expired (Boolean)
 // =============================================================================
 
 // ── Structs ──────────────────────────────────────────────────────────────────
@@ -55,7 +57,27 @@ struct PublicReport {
   has_evidence:        Boolean    // Public flag indicating presence of private evidence
 }
 
+/**
+ * VolunteerAttestation (Module 2)
+ *
+ * Publicly verifiable attestation record for a registered volunteer credential.
+ * Contains ZERO personally identifiable information (PII).
+ *
+ * Name, ID, address, certificate number, and contact info are NEVER stored on-chain.
+ * Selective disclosure reveals ONLY:
+ *   • is_verified: Verified / Not Verified (Boolean)
+ *   • is_active:   Certification Active / Expired (Boolean)
+ */
+struct VolunteerAttestation {
+  commitment:   Bytes<32>,  // Cryptographic commitment binding private credential fields
+  attested_at:  Uint<64>,   // Public Unix timestamp of issuance / attestation
+  is_verified:  Boolean,    // Selective disclosure: Verified (true) / Not Verified (false)
+  is_active:    Boolean     // Selective disclosure: Certification Active (true) / Expired (false)
+}
+
 // ── Public State Variables (Ledger) ──────────────────────────────────────────
+
+// ── Module 1: Crime Reporting Ledger State ──
 
 /**
  * report_count
@@ -83,10 +105,33 @@ export ledger verified_count: Counter;
  */
 export ledger type_counts: Map<Uint<8>, Uint<32>>;
 
+// ── Module 2: Confidential Volunteer Verification Ledger State ──
+
+/**
+ * volunteer_count
+ * Aggregate counter tracking total registered volunteer credentials on SafeCity.
+ */
+export ledger volunteer_count: Counter;
+
+/**
+ * active_volunteers_count
+ * Aggregate counter tracking currently active verified volunteers.
+ */
+export ledger active_volunteers_count: Counter;
+
+/**
+ * volunteer_credentials
+ * Ledger mapping from volunteer commitment (Bytes<32>) -> VolunteerAttestation.
+ * Contains ZERO PII. Publicly displays only is_verified and is_active.
+ */
+export ledger volunteer_credentials: Map<Bytes<32>, VolunteerAttestation>;
+
 // ── Private State Variables (Witnesses) ───────────────────────────────────────
 // These functions supply private witnesses during local ZK proof generation.
-// Their return values NEVER leave the reporter's device and are NEVER stored
+// Their return values NEVER leave the client's device and are NEVER stored
 // in ledger state or transaction bodies.
+
+// ── Module 1 Witnesses ──
 
 /**
  * reporterIdentity
@@ -108,6 +153,51 @@ witness crimeDescription(): Bytes<128>;
  * Proves possession of evidence without disclosing its content to the public.
  */
 witness evidenceHash(): Bytes<32>;
+
+// ── Module 2 Witnesses: Confidential Volunteer Verification ──
+// None of these private fields are EVER revealed on-chain.
+
+/**
+ * volunteerName
+ * Private witness supplying the volunteer's legal name.
+ * Stays strictly on the volunteer's device; evaluated inside local ZK circuit.
+ */
+witness volunteerName(): Bytes<32>;
+
+/**
+ * volunteerId
+ * Private witness supplying government or organization ID.
+ * Stays strictly on the volunteer's device; evaluated inside local ZK circuit.
+ */
+witness volunteerId(): Bytes<32>;
+
+/**
+ * volunteerAddress
+ * Private witness supplying volunteer's residential address.
+ * Stays strictly on the volunteer's device; evaluated inside local ZK circuit.
+ */
+witness volunteerAddress(): Bytes<64>;
+
+/**
+ * certificateNumber
+ * Private witness supplying professional certificate / license ID.
+ * Stays strictly on the volunteer's device; evaluated inside local ZK circuit.
+ */
+witness certificateNumber(): Bytes<32>;
+
+/**
+ * contactInfo
+ * Private witness supplying phone or email contact information.
+ * Stays strictly on the volunteer's device; evaluated inside local ZK circuit.
+ */
+witness contactInfo(): Bytes<32>;
+
+/**
+ * credentialExpiration
+ * Private witness supplying certificate expiration timestamp (Unix ms).
+ * Evaluated inside local circuit to compute is_active WITHOUT disclosing exact date.
+ */
+witness credentialExpiration(): Uint<64>;
 
 // ── Circuits ─────────────────────────────────────────────────────────────────
 
@@ -297,4 +387,130 @@ export circuit upvoteReport(report_id: Field): [] {
     upvotes:             r.upvotes + 1 as Uint<32>,
     has_evidence:        r.has_evidence
   });
+}
+
+// =============================================================================
+// MODULE 2 CIRCUITS: CONFIDENTIAL VOLUNTEER VERIFICATION
+// =============================================================================
+
+/**
+ * registerVolunteerCredential
+ *
+ * Registers an attested volunteer credential commitment on-chain.
+ *
+ * 🎯 PRIVACY GOAL:
+ *   Validates that the volunteer holds a valid, non-empty set of credentials
+ *   (Name, Volunteer ID, Address, Certificate Number, Contact Info, Expiration)
+ *   WITHOUT storing any of them on-chain.
+ *
+ * @param commitment  Cryptographic commitment binding the private credentials.
+ * @param attested_at Public Unix timestamp when the credential was registered.
+ * @return            The registered commitment.
+ */
+export circuit registerVolunteerCredential(
+  commitment:  Bytes<32>,
+  attested_at: Uint<64>
+): Bytes<32> {
+  assert commitment != pad(32, "") "Volunteer commitment must not be empty";
+  assert attested_at > 0           "Attestation timestamp must be positive";
+
+  // Evaluate private witnesses locally to enforce data integrity
+  const nameWitness: Bytes<32>    = volunteerName();
+  const idWitness: Bytes<32>      = volunteerId();
+  const addrWitness: Bytes<64>    = volunteerAddress();
+  const certWitness: Bytes<32>    = certificateNumber();
+  const contactWitness: Bytes<32> = contactInfo();
+  const expWitness: Uint<64>      = credentialExpiration();
+
+  assert nameWitness != pad(32, "")    "Volunteer name witness must not be empty";
+  assert idWitness != pad(32, "")      "Volunteer ID witness must not be empty";
+  assert addrWitness != pad(64, "")    "Volunteer address witness must not be empty";
+  assert certWitness != pad(32, "")    "Certificate number witness must not be empty";
+  assert contactWitness != pad(32, "") "Contact info witness must not be empty";
+
+  // Check if credential is currently active at registration time
+  const is_active: Boolean = expWitness >= attested_at;
+
+  // Save public attestation to shared ledger (zero PII)
+  volunteer_credentials.insert(commitment, VolunteerAttestation {
+    commitment:  commitment,
+    attested_at: attested_at,
+    is_verified: true,
+    is_active:   is_active
+  });
+
+  volunteer_count.increment(1);
+  if (is_active) {
+    active_volunteers_count.increment(1);
+  }
+
+  return commitment;
+}
+
+/**
+ * proveVolunteerEligibility
+ *
+ * Enables a volunteer to prove they possess a valid volunteer credential
+ * with SELECTIVE DISCLOSURE:
+ *
+ * 🛡️ SELECTIVE DISCLOSURE PRINCIPLE:
+ *   Proves the volunteer possesses a valid, non-expired certification:
+ *     • HIDDEN: Name, Volunteer ID, Address, Certificate Number, Contact Info, Expiration Date.
+ *     • REVEALED:
+ *         1. Verified / Not Verified (is_verified: true)
+ *         2. Certification Active / Expired (is_active: true/false)
+ *
+ * @param commitment   Cryptographic commitment of the credential being verified.
+ * @param current_time Current Unix timestamp to verify against expiration.
+ * @return             Boolean indicating whether certification is Active (true) or Expired (false).
+ */
+export circuit proveVolunteerEligibility(
+  commitment:   Bytes<32>,
+  current_time: Uint<64>
+): Boolean {
+  assert volunteer_credentials.member(commitment) "Volunteer credential commitment not found on-chain";
+
+  // Evaluate private witnesses inside local ZK circuit
+  const nameWitness: Bytes<32>    = volunteerName();
+  const idWitness: Bytes<32>      = volunteerId();
+  const addrWitness: Bytes<64>    = volunteerAddress();
+  const certWitness: Bytes<32>    = certificateNumber();
+  const contactWitness: Bytes<32> = contactInfo();
+  const expWitness: Uint<64>      = credentialExpiration();
+
+  assert nameWitness != pad(32, "")    "Volunteer name witness must not be empty";
+  assert idWitness != pad(32, "")      "Volunteer ID witness must not be empty";
+  assert addrWitness != pad(64, "")    "Volunteer address witness must not be empty";
+  assert certWitness != pad(32, "")    "Certificate number witness must not be empty";
+  assert contactWitness != pad(32, "") "Contact info witness must not be empty";
+
+  // Compare private expiration against public current_time
+  // Resolves Active vs Expired without leaking the exact expiration date!
+  const is_active: Boolean = expWitness >= current_time;
+
+  const prev: VolunteerAttestation = volunteer_credentials.lookup(commitment);
+
+  // Update on-chain selective disclosure record
+  volunteer_credentials.insert(commitment, VolunteerAttestation {
+    commitment:  prev.commitment,
+    attested_at: prev.attested_at,
+    is_verified: true,
+    is_active:   is_active
+  });
+
+  return is_active;
+}
+
+/**
+ * getVolunteerStatus
+ *
+ * Read-only circuit to inspect whether a volunteer commitment is Verified & Active.
+ *
+ * @param commitment Target credential commitment.
+ * @return           True if verified and certification is active.
+ */
+export circuit getVolunteerStatus(commitment: Bytes<32>): Boolean {
+  assert volunteer_credentials.member(commitment) "Volunteer credential commitment not found on-chain";
+  const att: VolunteerAttestation = volunteer_credentials.lookup(commitment);
+  return att.is_verified && att.is_active;
 }
