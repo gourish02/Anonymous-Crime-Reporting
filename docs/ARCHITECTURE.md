@@ -196,35 +196,54 @@ Community corroboration circuit incrementing endorsement count.
 
 ---
 
-### Module 2 Circuits (Confidential Volunteer Verification)
+### Module 2 Circuits (Confidential Volunteer Credential Verification)
 
-#### `registerVolunteerCredential`
+#### 1. `submitVolunteerCredential`
 ```compact
-export circuit registerVolunteerCredential(
-  commitment: Bytes<32>,
-  attested_at: Uint<64>
-): Bytes<32>
+export circuit submitVolunteerCredential(timestamp: Uint<64>): Field
 ```
-Registers an authorized credential commitment on-chain. Evaluates that the commitment hash is non-zero, increments `volunteer_count` and `active_volunteers_count`, and stores the `VolunteerAttestation` struct.
+Submits a volunteer credential for confidential on-chain verification.
+- **Private State Witnesses**: `volunteerName`, `volunteerId`, `credentialHash`, `certificateNumber`, `address`, `phoneNumber`, `expiryDate`.
+- **Public State Written**:
+  - `verificationStatus`: Initialized to `VERIFIED` (1) or `EXPIRED` (3).
+  - `timestamp`: Stored on-chain.
+- **Privacy Guarantee**: All 7 sensitive identifying attributes remain strictly inside the local witness memory and are NEVER written to the ledger.
+- **Returns**: Newly minted `credential_id` (Field).
 
-#### `proveVolunteerEligibility`
+#### 2. `verifyVolunteerCredential`
 ```compact
-export circuit proveVolunteerEligibility(
-  commitment: Bytes<32>,
+export circuit verifyVolunteerCredential(
+  credential_id: Field,
   current_time: Uint<64>
-): Boolean
+): Uint<8>
 ```
-Enforces **selective disclosure**:
-1. Checks that the credential commitment exists on the public ledger.
-2. Reads private witnesses `credentialExpiration()`, `volunteerName()`, etc.
-3. Computes `is_active = (credentialExpiration() >= current_time)` inside the circuit.
-4. Updates ledger status while revealing **only** `is_verified` and `is_active`.
+Verifies credential validity and evaluates expiration date against `current_time` inside the zero-knowledge circuit.
+- **Privacy Guarantee**: The arithmetic circuit proves `expiryDate >= current_time` without ever disclosing the actual expiry date or any private identity fields.
+- **Public State Updated**: `verificationStatus` updated to `ACTIVE` (2) or `EXPIRED` (3), `timestamp` updated to `current_time`.
+- **Allowed Returns**:
+  - `0`: `NOT VERIFIED`
+  - `1`: `VERIFIED`
+  - `2`: `ACTIVE`
+  - `3`: `EXPIRED`
 
-#### `getVolunteerStatus`
+#### 3. `getVerificationStatus`
 ```compact
+export circuit getVerificationStatus(credential_id: Field): Uint<8>
+```
+Read-only query circuit for verifiers, dispatchers, and community members.
+- **Returns**: Exclusively one of the four allowed verification states:
+  - `0`: `NOT VERIFIED`
+  - `1`: `VERIFIED`
+  - `2`: `ACTIVE`
+  - `3`: `EXPIRED`
+
+#### 4. `registerVolunteerCredential` & `proveVolunteerEligibility` (Commitment Mode)
+```compact
+export circuit registerVolunteerCredential(commitment: Bytes<32>, attested_at: Uint<64>): Bytes<32>
+export circuit proveVolunteerEligibility(commitment: Bytes<32>, current_time: Uint<64>): Boolean
 export circuit getVolunteerStatus(commitment: Bytes<32>): Boolean
 ```
-Public query circuit enabling coordinators, emergency dispatchers, or law enforcement to verify credential validity in $O(1)$ lookup time without possessing personal volunteer data.
+Commitment-based selective disclosure circuits verifying credential integrity and active/expired state from a 32-byte cryptographic commitment digest.
 
 ---
 

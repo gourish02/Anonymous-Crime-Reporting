@@ -16,11 +16,15 @@ import {
   registerVolunteerCredential,
   verifyVolunteerCommitment,
   getAllAttestedVolunteers,
+  submitVolunteerCredential,
+  verifyVolunteerCredential,
+  getVerificationStatus,
 } from '@/api/volunteer'
 import type {
   VolunteerCredentialInput,
   VolunteerVerificationResult,
   OnChainVolunteerAttestation,
+  ConfidentialCredentialStatus,
 } from '@/types'
 
 const DEFAULT_CREDENTIAL: VolunteerCredentialInput = {
@@ -496,10 +500,21 @@ export function VolunteerVerificationPage() {
                       Verification Status
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
-                      <CheckCircle2 size={20} className="text-green" />
-                      <span style={{ fontSize: '1.15rem', fontWeight: 800, color: '#a6e3a1' }}>
-                        Verified
-                      </span>
+                      {proofResult.isVerified ? (
+                        <>
+                          <CheckCircle2 size={20} className="text-green" />
+                          <span style={{ fontSize: '1.15rem', fontWeight: 800, color: '#a6e3a1', letterSpacing: '0.04em' }}>
+                            VERIFIED
+                          </span>
+                        </>
+                      ) : (
+                        <>
+                          <XCircle size={20} className="text-red" />
+                          <span style={{ fontSize: '1.15rem', fontWeight: 800, color: '#f87171', letterSpacing: '0.04em' }}>
+                            NOT VERIFIED
+                          </span>
+                        </>
+                      )}
                     </div>
                   </div>
 
@@ -514,21 +529,21 @@ export function VolunteerVerificationPage() {
                     }}
                   >
                     <div style={{ fontSize: '0.75rem', color: '#a6adc8', textTransform: 'uppercase', marginBottom: '4px' }}>
-                      Certification Validity
+                      Certification State
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
                       {proofResult.isActive ? (
                         <>
                           <Clock size={20} className="text-green" />
-                          <span style={{ fontSize: '1.15rem', fontWeight: 800, color: '#4ade80' }}>
-                            Active
+                          <span style={{ fontSize: '1.15rem', fontWeight: 800, color: '#4ade80', letterSpacing: '0.04em' }}>
+                            ACTIVE
                           </span>
                         </>
                       ) : (
                         <>
                           <XCircle size={20} className="text-red" />
-                          <span style={{ fontSize: '1.15rem', fontWeight: 800, color: '#f87171' }}>
-                            Expired
+                          <span style={{ fontSize: '1.15rem', fontWeight: 800, color: '#f87171', letterSpacing: '0.04em' }}>
+                            EXPIRED
                           </span>
                         </>
                       )}
@@ -720,7 +735,7 @@ export function VolunteerVerificationPage() {
                     <div style={{ textAlign: 'center', padding: '0.75rem', background: 'rgba(34, 197, 94, 0.08)', borderRadius: '8px' }}>
                       <div style={{ fontSize: '0.75rem', color: '#a6adc8' }}>Verification Status</div>
                       <div style={{ fontSize: '1.2rem', fontWeight: 800, color: '#a6e3a1', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
-                        <CheckCircle2 size={18} /> Verified
+                        <CheckCircle2 size={18} /> VERIFIED
                       </div>
                     </div>
 
@@ -728,7 +743,7 @@ export function VolunteerVerificationPage() {
                       <div style={{ fontSize: '0.75rem', color: '#a6adc8' }}>Certification State</div>
                       <div style={{ fontSize: '1.2rem', fontWeight: 800, color: searchResult.isActive ? '#4ade80' : '#f87171', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px' }}>
                         {searchResult.isActive ? <CheckCircle2 size={18} /> : <XCircle size={18} />}
-                        {searchResult.isActive ? 'Active' : 'Expired'}
+                        {searchResult.isActive ? 'ACTIVE' : 'EXPIRED'}
                       </div>
                     </div>
                   </div>

@@ -170,18 +170,38 @@ export interface OnChainVolunteerAttestation {
   isActive:   boolean         // Selective disclosure: Certification Active / Expired
 }
 
+/** Discrete allowed return states for the confidential credential verification module */
+export type ConfidentialCredentialStatus = 'VERIFIED' | 'NOT VERIFIED' | 'ACTIVE' | 'EXPIRED'
+
+export const CONFIDENTIAL_STATUS_CODES: Record<number, ConfidentialCredentialStatus> = {
+  0: 'NOT VERIFIED',
+  1: 'VERIFIED',
+  2: 'ACTIVE',
+  3: 'EXPIRED',
+}
+
+/** Mirrors on-chain VolunteerCredentialRecord struct */
+export interface VolunteerCredentialRecord {
+  credentialId:       bigint
+  verificationStatus: ConfidentialCredentialStatus
+  statusCode:         number
+  timestamp:          number
+}
+
 /** Full verification result returned to the UI */
 export interface VolunteerVerificationResult {
   commitment:          string
   isVerified:          boolean
   isActive:            boolean
+  status:              ConfidentialCredentialStatus
   attestedAt:          number
   proof:               ProofMetadata
   selectiveDisclosure: {
     revealed: {
-      verificationStatus: 'Verified' | 'Not Verified'
-      certificationState: 'Certification Active' | 'Certification Expired'
+      verificationStatus: 'VERIFIED' | 'NOT VERIFIED'
+      certificationState: 'ACTIVE' | 'EXPIRED'
     }
     hiddenPrivateFields: string[]
   }
 }
+
