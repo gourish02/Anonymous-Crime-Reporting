@@ -1,0 +1,14 @@
+{
+  "name": "@anon-crime/contract",
+  "version": "1.0.0",
+  "description": "Midnight Compact smart contract for anonymous crime reporting",
+  "private": true,
+  "scripts": {
+    "build": "compactc src/crime_report.compact dist/",
+    "test": "echo \"Contract tests: run compact-test\" && exit 0",
+    "clean": "rimraf dist/"
+  },
+  "devDependencies": {
+    "rimraf": "^5.0.5"
+  }
+}

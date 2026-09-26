@@ -1,0 +1,75 @@
+version: '3.9'
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Midnight Local Devnet Stack
+# Usage: docker compose -f devnet/docker-compose.yml up -d
+# ─────────────────────────────────────────────────────────────────────────────
+
+services:
+  # Midnight node (devnet)
+  midnight-node:
+    image: midnightnetwork/midnight-node:latest
+    container_name: midnight-devnet-node
+    ports:
+      - "9944:9944"   # RPC
+      - "9933:9933"   # WebSocket
+    environment:
+      - MIDNIGHT_NETWORK=devnet
+      - RUST_LOG=info
+    volumes:
+      - midnight-node-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9944/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Midnight indexer
+  midnight-indexer:
+    image: midnightnetwork/midnight-indexer:latest
+    container_name: midnight-devnet-indexer
+    ports:
+      - "8088:8088"   # GraphQL API
+      - "8080:8080"   # Explorer UI
+    environment:
+      - NODE_URL=ws://midnight-node:9933
+      - DATABASE_URL=postgresql://postgres:postgres@postgres:5432/midnight_indexer
+    depends_on:
+      midnight-node:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+
+  # Proof server
+  proof-server:
+    image: midnightnetwork/midnight-proof-server:latest
+    container_name: midnight-devnet-proof-server
+    ports:
+      - "6300:6300"
+    environment:
+      - PROOF_SERVER_PORT=6300
+    volumes:
+      - proof-server-data:/data
+
+  # PostgreSQL (for indexer)
+  postgres:
+    image: postgres:16-alpine
+    container_name: midnight-devnet-postgres
+    environment:
+      POSTGRES_DB: midnight_indexer
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  midnight-node-data:
+  proof-server-data:
+  postgres-data:

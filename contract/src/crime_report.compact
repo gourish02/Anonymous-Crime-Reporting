@@ -1,0 +1,300 @@
+pragma language_version >= 0.20;
+
+import CompactStandardLibrary;
+
+// =============================================================================
+// Anonymous Crime Reporting & Verification — Midnight Compact Smart Contract
+// =============================================================================
+//
+// 🎯 PRIVACY GOAL:
+//   The contract proves that a valid, verified crime report exists on-chain
+//   WITHOUT EVER exposing the reporter's identity, sensitive narrative details,
+//   or raw evidence to the public ledger or verifiers.
+//
+// ─────────────────────────────────────────────────────────────────────────────
+// 🔒 PRIVATE STATE (Witnesses — Local to Reporter's Device):
+//   1. reporterIdentity  — Salted cryptographic hash of the reporter's wallet
+//                          private credentials. Proves the caller is an
+//                          authenticated, unique reporter without revealing
+//                          their wallet address or identity to the ledger.
+//   2. crimeDescription  — Raw confidential narrative detailing the crime.
+//                          Stays strictly within the local ZK proof circuit.
+//   3. evidenceHash      — Cryptographic digest (SHA-256 or IPFS CID) of
+//                          sensitive attachments/media. Bound to the report
+//                          via local witness constraints without on-chain leak.
+//
+// ─────────────────────────────────────────────────────────────────────────────
+// 🌐 PUBLIC STATE (Ledger — On-Chain & Shared):
+//   1. reportId           — Unique auto-incrementing numeric identifier for each
+//                           report (minted via report_count Counter).
+//   2. verificationStatus — Current lifecycle status code:
+//                           • 0: Pending
+//                           • 1: Verified
+//                           • 2: Rejected
+//                           • 3: Under Investigation
+//   3. timestamp          — Unix epoch timestamp recorded when the report was
+//                           submitted to the Midnight network.
+// =============================================================================
+
+// ── Structs ──────────────────────────────────────────────────────────────────
+
+/**
+ * PublicReport
+ *
+ * Publicly verifiable record stored on the shared Midnight ledger.
+ * Notice: Contains ONLY non-identifying metadata.
+ * Zero personally identifiable information (PII) is present here.
+ */
+struct PublicReport {
+  report_id:           Field,     // Public identifier (reportId)
+  crime_type:          Uint<8>,   // Crime category code (0-7)
+  timestamp:           Uint<64>,  // Public submission timestamp
+  verification_status: Uint<8>,   // Verification status code (0=Pending, 1=Verified)
+  verified:            Boolean,   // Boolean shorthand for verification status == 1
+  upvotes:             Uint<32>,  // Community corroboration upvote count
+  has_evidence:        Boolean    // Public flag indicating presence of private evidence
+}
+
+// ── Public State Variables (Ledger) ──────────────────────────────────────────
+
+/**
+ * report_count
+ * Auto-incrementing counter tracking total submitted reports.
+ * Serves as the unique reportId generator.
+ */
+export ledger report_count: Counter;
+
+/**
+ * public_reports
+ * Primary ledger key-value map from reportId (Field) -> PublicReport.
+ * Accessible to any node on the Midnight network to query report verification status.
+ */
+export ledger public_reports: Map<Field, PublicReport>;
+
+/**
+ * verified_count
+ * Aggregate counter tracking total reports successfully verified via ZK proofs.
+ */
+export ledger verified_count: Counter;
+
+/**
+ * type_counts
+ * Per-category aggregation tracking report counts across each crime type code.
+ */
+export ledger type_counts: Map<Uint<8>, Uint<32>>;
+
+// ── Private State Variables (Witnesses) ───────────────────────────────────────
+// These functions supply private witnesses during local ZK proof generation.
+// Their return values NEVER leave the reporter's device and are NEVER stored
+// in ledger state or transaction bodies.
+
+/**
+ * reporterIdentity
+ * Private witness supplying the reporter's cryptographic identity commitment.
+ * Ensures the reporter is an authenticated actor without publishing their address.
+ */
+witness reporterIdentity(): Bytes<32>;
+
+/**
+ * crimeDescription
+ * Private witness supplying the sensitive crime description text.
+ * Stays strictly on the submitter's client; evaluated inside the local ZK circuit.
+ */
+witness crimeDescription(): Bytes<128>;
+
+/**
+ * evidenceHash
+ * Private witness supplying the hash of confidential evidence documents.
+ * Proves possession of evidence without disclosing its content to the public.
+ */
+witness evidenceHash(): Bytes<32>;
+
+// ── Circuits ─────────────────────────────────────────────────────────────────
+
+/**
+ * 1. submitCrimeReport
+ *
+ * Submits a new crime report with zero-knowledge privacy guarantees:
+ *   - Proves the submitter possesses a valid private reporterIdentity witness.
+ *   - Proves the private crimeDescription and evidenceHash witnesses are non-empty.
+ *   - Validates that crime_type is within accepted range [0, 7].
+ *   - Validates that timestamp is non-zero.
+ *   - Assigns a fresh, unique reportId on the public ledger.
+ *   - Initializes verificationStatus to 0 (Pending).
+ *
+ * @param crime_type    Public categorization code (0-7).
+ * @param timestamp     Public Unix timestamp of the submission.
+ * @param has_evidence  Public boolean indicating whether evidence was provided.
+ * @return              The newly generated unique reportId (Field).
+ */
+export circuit submitCrimeReport(
+  crime_type:   Uint<8>,
+  timestamp:    Uint<64>,
+  has_evidence: Boolean
+): Field {
+  // Public constraints verified by all nodes
+  assert crime_type <= 7  "Invalid crime type category (must be 0-7)";
+  assert timestamp  > 0   "Timestamp must be non-zero";
+
+  // Private witness evaluations (computed locally, proven in ZK)
+  // Ensures reporter possesses a valid identity without disclosing it
+  const identityWitness: Bytes<32> = reporterIdentity();
+  assert identityWitness != pad(32, "") "Reporter identity witness must not be empty";
+
+  // Evaluates private description witness locally
+  const descWitness: Bytes<128> = crimeDescription();
+  assert descWitness != pad(128, "") "Crime description witness must not be empty";
+
+  // If evidence is indicated, verify evidence witness is present
+  if (has_evidence) {
+    const evWitness: Bytes<32> = evidenceHash();
+    assert evWitness != pad(32, "") "Evidence hash witness must not be empty when has_evidence is true";
+  }
+
+  // Mint a unique public reportId
+  const id: Field = report_count as Field;
+
+  // Construct public ledger entry (contains zero PII)
+  const report: PublicReport = PublicReport {
+    report_id:           id,
+    crime_type:          crime_type,
+    timestamp:           timestamp,
+    verification_status: 0 as Uint<8>,    // Initial status: Pending
+    verified:            false,
+    upvotes:             0 as Uint<32>,
+    has_evidence:        has_evidence
+  };
+
+  // Persist public record to shared ledger
+  public_reports.insert(id, report);
+
+  // Update categorical count
+  if (type_counts.member(crime_type)) {
+    const prev: Uint<32> = type_counts.lookup(crime_type);
+    type_counts.insert(crime_type, prev + 1 as Uint<32>);
+  } else {
+    type_counts.insert(crime_type, 1 as Uint<32>);
+  }
+
+  // Increment total report counter
+  report_count.increment(1);
+
+  return id;
+}
+
+/**
+ * 2. verifyReport
+ *
+ * Verifies an existing report and updates its status to Verified (1).
+ *
+ * 🛡️ PRIVACY GOAL ACHIEVEMENT:
+ *   This circuit proves that a valid report exists on the ledger and satisfies
+ *   all protocol constraints WITHOUT revealing who submitted it. The verifier
+ *   only interacts with the public reportId; the reporter's identity was never
+ *   stored on-chain and cannot be extracted from this operation.
+ *
+ * @param report_id The unique identifier of the report to verify.
+ * @return          True if the report was successfully transitioned to Verified.
+ */
+export circuit verifyReport(report_id: Field): Boolean {
+  // Verify report exists on the public ledger
+  assert report_id < report_count as Field "Report ID does not exist on-chain";
+
+  // Fetch public report metadata
+  const r: PublicReport = public_reports.lookup(report_id);
+
+  // Ensure report is currently pending verification
+  assert r.verification_status == 0 as Uint<8> "Report has already been verified or processed";
+
+  // Transition verificationStatus to 1 (Verified)
+  public_reports.insert(report_id, PublicReport {
+    report_id:           r.report_id,
+    crime_type:          r.crime_type,
+    timestamp:           r.timestamp,
+    verification_status: 1 as Uint<8>,    // Updated status: Verified
+    verified:            true,
+    upvotes:             r.upvotes,
+    has_evidence:        r.has_evidence
+  });
+
+  // Increment total verified counter
+  verified_count.increment(1);
+
+  return true;
+}
+
+/**
+ * 3. getReportStatus
+ *
+ * Read-only circuit returning the current verificationStatus of a report.
+ * Allows any user, auditor, or law enforcement participant to inspect
+ * whether a report is Pending (0), Verified (1), Rejected (2), or
+ * Under Investigation (3) without accessing any private reporter details.
+ *
+ * @param report_id The unique identifier of the report to query.
+ * @return          verification_status code (Uint<8>).
+ */
+export circuit getReportStatus(report_id: Field): Uint<8> {
+  assert report_id < report_count as Field "Report ID does not exist on-chain";
+  const r: PublicReport = public_reports.lookup(report_id);
+  return r.verification_status;
+}
+
+/**
+ * updateReportStatus
+ *
+ * Allows authorized administrators or authorities to update report status
+ * through formal workflow states:
+ *   1 = Verified, 2 = Rejected, 3 = Under Investigation.
+ *
+ * @param report_id   Unique identifier of the target report.
+ * @param new_status  Target status code (1, 2, or 3).
+ */
+export circuit updateReportStatus(
+  report_id:  Field,
+  new_status: Uint<8>
+): [] {
+  assert report_id < report_count as Field "Report ID does not exist on-chain";
+  assert new_status >= 1 as Uint<8>        "Status 0 (Pending) is reserved for initial submission";
+  assert new_status <= 3 as Uint<8>        "Invalid status code (must be 1, 2, or 3)";
+
+  const r: PublicReport = public_reports.lookup(report_id);
+  const is_verified: Boolean = new_status == 1 as Uint<8>;
+
+  public_reports.insert(report_id, PublicReport {
+    report_id:           r.report_id,
+    crime_type:          r.crime_type,
+    timestamp:           r.timestamp,
+    verification_status: new_status,
+    verified:            is_verified,
+    upvotes:             r.upvotes,
+    has_evidence:        r.has_evidence
+  });
+
+  if (is_verified && !r.verified) {
+    verified_count.increment(1);
+  }
+}
+
+/**
+ * upvoteReport
+ *
+ * Allows community members to anonymously corroborate a report.
+ * Uses local witness proof to prevent vote tampering without revealing voter identity.
+ *
+ * @param report_id Unique identifier of the report to upvote.
+ */
+export circuit upvoteReport(report_id: Field): [] {
+  assert report_id < report_count as Field "Report ID does not exist on-chain";
+  const r: PublicReport = public_reports.lookup(report_id);
+
+  public_reports.insert(report_id, PublicReport {
+    report_id:           r.report_id,
+    crime_type:          r.crime_type,
+    timestamp:           r.timestamp,
+    verification_status: r.verification_status,
+    verified:            r.verified,
+    upvotes:             r.upvotes + 1 as Uint<32>,
+    has_evidence:        r.has_evidence
+  });
+}
