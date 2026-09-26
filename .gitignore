@@ -1,0 +1,17 @@
+node_modules/
+dist/
+.env
+.env.local
+.env.*.local
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+contract/dist/
+*.tsbuildinfo
+.vercel/
+coverage/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
