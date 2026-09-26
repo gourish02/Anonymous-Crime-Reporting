@@ -11,6 +11,8 @@
     "type-check": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:contract": "node contract/test/crime_report.test.mjs",
+    "test:all": "vitest run && node contract/test/crime_report.test.mjs && npm run ai:test",
     "ai:train": "python backend/train.py",
     "ai:test": "python backend/test_classifier.py && python backend/test_api.py",
     "ai:server": "python backend/run.py"

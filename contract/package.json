@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "build": "compactc src/crime_report.compact dist/",
-    "test": "echo \"Contract tests: run compact-test\" && exit 0",
+    "test": "node test/crime_report.test.mjs",
     "clean": "rimraf dist/"
   },
   "devDependencies": {

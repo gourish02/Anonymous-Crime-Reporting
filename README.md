@@ -293,12 +293,17 @@ npm run dev
 
 ### 4. Run Automated Tests
 ```bash
-# Frontend type check & tests
-npm run type-check
+# Midnight Compact contract circuits test suite (5 core tests)
+npm run test:contract
+
+# Midnight DApp & frontend test suite (Vitest)
 npm test
 
-# Python AI classifier & FastAPI tests
+# Python AI classifier & FastAPI integration tests
 npm run ai:test
+
+# Run all test suites across all modules
+npm run test:all
 ```
 
 ---
@@ -312,7 +317,9 @@ npm run ai:test
 | `npm run preview` | Locally preview production bundle |
 | `npm run type-check` | Run TypeScript strict compiler check (`tsc --noEmit`) |
 | `npm run lint` | Run ESLint across all TypeScript and TSX files |
-| `npm test` | Run Vitest unit tests |
+| `npm test` | Run Midnight DApp & frontend unit/integration tests (Vitest) |
+| `npm run test:contract` | Run Midnight Compact contract test suite (`5 core tests`) |
+| `npm run test:all` | Run complete multi-module test suite (DApp + Contract + AI) |
 | `npm run ai:train` | Run Scikit-Learn training pipeline (`backend/train.py`) |
 | `npm run ai:test` | Run ML classifier & FastAPI unit/integration tests |
 | `npm run ai:server` | Start FastAPI server on port 8000 (`backend/run.py`) |
