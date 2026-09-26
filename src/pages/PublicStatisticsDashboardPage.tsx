@@ -39,6 +39,15 @@ export function PublicStatisticsDashboardPage() {
   const activeVolunteers = volunteers.filter(v => v.isActive).length
   const expiredVolunteers = totalVolunteers - activeVolunteers
 
+  // Crime Category color palette
+  const categoryColors: Record<number, string> = {
+    1: 'var(--red)',
+    2: 'var(--peach)',
+    3: 'var(--mauve)',
+    4: 'var(--yellow)',
+    5: 'var(--teal)',
+  }
+
   // Crime Category breakdown
   const categoryCounts = [1, 2, 3, 4, 5].map(code => {
     const key = code as keyof typeof CRIME_TYPES
@@ -46,8 +55,8 @@ export function PublicStatisticsDashboardPage() {
     const pct = totalReports > 0 ? Math.round((count / totalReports) * 100) : 0
     return {
       code,
-      name: CRIME_TYPES[key]?.name || `Category ${code}`,
-      color: CRIME_TYPES[key]?.color || 'var(--blue)',
+      name: CRIME_TYPES[key] || `Category ${code}`,
+      color: categoryColors[code] || 'var(--blue)',
       count,
       pct,
     }

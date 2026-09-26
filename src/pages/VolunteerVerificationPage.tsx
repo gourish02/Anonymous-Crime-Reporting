@@ -4,6 +4,7 @@
 // =============================================================================
 
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   UserCheck, Lock, Eye, EyeOff, ShieldCheck, CheckCircle2,
@@ -39,6 +40,7 @@ const DEFAULT_CREDENTIAL: VolunteerCredentialInput = {
 }
 
 export function VolunteerVerificationPage() {
+  const navigate = useNavigate()
   const [activeTab, setActiveTab]         = useState<'prove' | 'verifier' | 'directory'>('prove')
   const [form, setForm]                   = useState<VolunteerCredentialInput>(DEFAULT_CREDENTIAL)
   const [isProving, setIsProving]         = useState(false)
