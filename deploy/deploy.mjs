@@ -138,13 +138,14 @@ if (compiledWithDocker) {
   }
 }
 
-// Deterministic derivation for Midnight preprod
 if (!contractAddress) {
-  const salt = crypto.createHash('sha256').update(SEED).digest('hex')
-  const rawAddr = crypto.createHash('sha256').update(salt + contractHash + NETWORK).digest('hex')
-  contractAddress = '0200' + rawAddr.substring(4)
-  txHash = 'tx_' + crypto.createHash('sha256').update(contractAddress + 'preprod_genesis').digest('hex')
-  log('✅', `Contract deployment confirmed on ${cfg.label}`)
+  console.error('\n❌  No on-chain deployment was executed.')
+  console.error('    Midnight contract deployment requires:')
+  console.error('    1. Docker or Midnight CLI installed')
+  console.error('    2. Active connection to Midnight Preprod RPC node')
+  console.error('    3. Funded wallet seed (tDUST tokens on Preprod)')
+  console.error('    See docs/DEPLOYMENT_CHECKLIST.md for complete step-by-step instructions.\n')
+  process.exit(1)
 }
 
 log('📍', `Contract Address: ${contractAddress}`)

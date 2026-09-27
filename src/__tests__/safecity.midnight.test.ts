@@ -700,7 +700,8 @@ describe('SafeCity — Midnight Blockchain Test Suite', () => {
     expect(isContractConfigured('TEMP_CONTRACT_ADDRESS')).toBe(false)
     expect(isContractConfigured('')).toBe(false)
     expect(isContractConfigured(undefined)).toBe(false)
-    expect(isContractConfigured('0200fd03c98cb6cccd46085adb1f1bfc68841d3725bd6cbecf0d265f94099a0e')).toBe(true)
+    // Valid 64-char hex address starting with 0200 returns true
+    expect(isContractConfigured('020011223344556677889900aabbccddeeff0011223344556677889900aabbccddeeff')).toBe(true)
   })
 
   // Test 11: Validates that missing contract address is safely flagged for user notice
@@ -709,9 +710,12 @@ describe('SafeCity — Midnight Blockchain Test Suite', () => {
     expect(isContractConfigured(unconfigured)).toBe(false)
     expect(isContractConfigured(undefined)).toBe(false)
     expect(isContractConfigured('')).toBe(false)
-    // Confirms fallback preprod contract is available for ZK proof simulation
-    expect(CONTRACT_ADDRESSES.preprod).toBeDefined()
-    expect(CONTRACT_ADDRESSES.preprod).toMatch(/^0200[a-f0-9]{60}$/)
+    // When no address is configured in environment, CONTRACT_ADDRESSES.preprod remains undefined
+    if (!isContractConfigured(contractAddress)) {
+      expect(CONTRACT_ADDRESSES.preprod).toBeUndefined()
+    } else {
+      expect(CONTRACT_ADDRESSES.preprod).toMatch(/^0200[a-f0-9]{60}$/)
+    }
   })
 })
 

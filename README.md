@@ -48,15 +48,16 @@ Public safety and civic reporting systems face three critical privacy and compli
 |---|---|
 | **Platform** | SafeCity Decentralized Public Safety Platform |
 | **Network** | Midnight Preprod Testnet (`testnet-02`) |
-| **Contract Address** | `0200fd03c98cb6cccd46085adb1f1bfc68841d3725bd6cbecf0d265f94099a0e` |
-| **Status** | 🟡 Deterministic Preprod Deployment & Verification Artifact |
+| **Contract Address** | `NOT_CONFIGURED` (Pending Testnet Deployment) |
+| **Status** | 🟡 **ZK Cryptographic Simulation Mode** (Verified via Simulator & Pending On-Chain Broadcast) |
 | **Module 1 Circuits** | `submitCrimeReport`, `verifyReport`, `getReportStatus`, `updateReportStatus`, `upvoteReport` |
 | **Module 2 Circuits** | `submitVolunteerCredential`, `verifyVolunteerCredential`, `getVerificationStatus`, `registerVolunteerCredential`, `proveVolunteerEligibility` |
 | **Module 3 Circuits** | `submitAgeCredential`, `verifyAgeEligibility`, `getEligibilityStatus` |
 | **Block Explorer** | [Midnight Testnet Explorer](https://testnet.midnightexplorer.com) |
-| **Explorer Verification** | Search address in [testnet.midnightexplorer.com](https://testnet.midnightexplorer.com) search bar |
+| **Deployment Checklist** | [docs/DEPLOYMENT_CHECKLIST.md](docs/DEPLOYMENT_CHECKLIST.md) |
+| **Verification Report** | [docs/DEPLOYMENT_VERIFICATION_REPORT.md](docs/DEPLOYMENT_VERIFICATION_REPORT.md) |
 
-> **Contract Verification & Explorer Guide**: `0200fd03c98cb6cccd46085adb1f1bfc68841d3725bd6cbecf0d265f94099a0e` is the deterministically derived contract address produced by the Compact compiler deployment pipeline (`contract/dist/manifest.json`). Rather than relying on direct contract URL paths which may not resolve prior to public indexing, search for the address directly in the search bar on [testnet.midnightexplorer.com](https://testnet.midnightexplorer.com).
+> ℹ️ **Deployment Verification Note**: The SafeCity smart contracts are written in Midnight Compact 2.0 and thoroughly tested via unit test simulation engines. The contract has **not yet been broadcast to the live Midnight Preprod testnet ledger**; previously referenced `0200` addresses were synthetic offline build artifacts. When running without an on-chain deployment, the dApp seamlessly operates in local cryptographic proof simulation mode. Follow the [Deployment Checklist](docs/DEPLOYMENT_CHECKLIST.md) to fund a Midnight wallet and execute an on-chain deployment.
 
 ---
 
@@ -516,8 +517,8 @@ cp .env.example .env
 | Variable | Description | Default / Fallback |
 |---|---|---|
 | `VITE_MIDNIGHT_NETWORK` | Network target (`preprod` or `devnet`) | `preprod` |
-| `VITE_CONTRACT_ADDRESS_PREPROD` | Preprod contract address (falls back to `NOT_CONFIGURED` if unset) | `0200fd03c98cb6cccd46085adb1f1bfc68841d3725bd6cbecf0d265f94099a0e` |
-| `VITE_CONTRACT_ADDRESS_DEVNET` | Local DevNet contract address | `0200000000000000000000000000000000000000000000000000000000000000` |
+| `VITE_CONTRACT_ADDRESS_PREPROD` | Preprod contract address (falls back to `NOT_CONFIGURED` simulation mode if unset) | `NOT_CONFIGURED` |
+| `VITE_CONTRACT_ADDRESS_DEVNET` | Local DevNet contract address | `NOT_CONFIGURED` |
 | `VITE_AI_BACKEND_URL` | FastAPI service base URL | `http://localhost:8000` |
 | `VITE_INDEXER_URL_PREPROD` | Midnight GraphQL Indexer endpoint | `https://indexer.testnet-02.midnight.network/api/v1/graphql` |
 | `VITE_PROOF_SERVER_URL` | Midnight Proof Server endpoint | `http://localhost:6300` |
@@ -533,11 +534,15 @@ npm run dev
 ```
 
 ### 4. Deploying Smart Contracts
-To deploy a new instance of the SafeCity Compact smart contract to the Midnight Preprod Testnet:
+The SafeCity contracts are verified using local cryptographic simulation. To deploy to the live Midnight Preprod Testnet:
 
+1. Follow the comprehensive [Deployment Checklist](docs/DEPLOYMENT_CHECKLIST.md) to set up Docker, compile Compact contracts, and acquire testnet tokens.
+2. Run the deployment script with your funded seed phrase:
 ```bash
+$env:MIDNIGHT_SEED="your 24-word seed phrase"
 node deploy/deploy.mjs --network preprod
 ```
+3. Update your `.env` or Vercel environment variables with the newly generated on-chain address.
 
 ### 5. Production Web Deployment (Vercel)
 The web application is pre-configured for Vercel deployment with single-page app rewrites and standard environment variables in [`vercel.json`](vercel.json).

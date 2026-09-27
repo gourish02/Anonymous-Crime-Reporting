@@ -74,7 +74,8 @@ jobs:
               circuits: ['submitCrimeReport', 'verifyReport', 'getReportStatus', 'updateReportStatus', 'upvoteReport'],
               version: '2.0.0',
               hash: hash,
-              contractAddress: '0200fd03c98cb6cccd46085adb1f1bfc68841d3725bd6cbecf0d265f94099a0e',
+              contractAddress: 'NOT_CONFIGURED',
+              deploymentStatus: 'pending_deployment',
               network: 'preprod',
               compiledAt: new Date().toISOString()
             };
@@ -99,43 +100,40 @@ jobs:
         run: |
           node -e "
             const fs = require('fs');
-            const crypto = require('crypto');
             
             const network = process.env.MIDNIGHT_NETWORK || 'preprod';
             const seed = process.env.MIDNIGHT_SEED || '';
             
-            console.log('Deploying to Midnight Network: ' + network);
+            console.log('Target Midnight Network: ' + network);
             
-            // Deterministic Midnight contract address derived from seed + contract manifest
-            const manifest = JSON.parse(fs.readFileSync('contract/dist/manifest.json', 'utf8'));
-            const salt = seed ? crypto.createHash('sha256').update(seed).digest('hex') : 'genesis_salt';
-            const rawAddr = crypto.createHash('sha256').update(salt + manifest.hash + network).digest('hex');
-            
-            // Midnight contract addresses are prefixed with 0200
-            const contractAddress = '0200' + rawAddr.substring(4);
-            const txHash = 'tx_' + crypto.createHash('sha256').update(contractAddress + Date.now()).digest('hex');
-            
-            console.log('========================================');
-            console.log('MIDNIGHT CONTRACT DEPLOYED!');
-            console.log('Network:          ' + network);
-            console.log('Contract Address: ' + contractAddress);
-            console.log('Deploy Tx Hash:   ' + txHash);
-            console.log('========================================');
-            
-            fs.appendFileSync(process.env.GITHUB_OUTPUT, 'contract_address=' + contractAddress + '\n');
-            fs.appendFileSync(process.env.GITHUB_OUTPUT, 'tx_hash=' + txHash + '\n');
-            fs.appendFileSync(process.env.GITHUB_OUTPUT, 'network=' + network + '\n');
-            
-            // Update local .env
-            let env = fs.existsSync('.env') ? fs.readFileSync('.env', 'utf8') : '';
-            env = env.replace(/^VITE_CONTRACT_ADDRESS_PREPROD=.*$/m, 'VITE_CONTRACT_ADDRESS_PREPROD=' + contractAddress);
-            if (!env.includes('VITE_CONTRACT_ADDRESS_PREPROD=')) {
-              env += '\nVITE_CONTRACT_ADDRESS_PREPROD=' + contractAddress;
+            // Check if live deployment prerequisites are configured
+            if (!seed) {
+              console.log('========================================');
+              console.log('NOTICE: MIDNIGHT_SEED secret is not configured.');
+              console.log('Contract deployment to live Midnight testnet is pending.');
+              console.log('Operating in local ZK cryptographic simulation mode.');
+              console.log('See docs/DEPLOYMENT_CHECKLIST.md for deployment instructions.');
+              console.log('========================================');
+              
+              const contractAddress = 'NOT_CONFIGURED';
+              const txHash = 'N/A (Pending On-Chain Deployment)';
+              
+              fs.appendFileSync(process.env.GITHUB_OUTPUT, 'contract_address=' + contractAddress + '\n');
+              fs.appendFileSync(process.env.GITHUB_OUTPUT, 'tx_hash=' + txHash + '\n');
+              fs.appendFileSync(process.env.GITHUB_OUTPUT, 'network=' + network + '\n');
+              fs.appendFileSync(process.env.GITHUB_OUTPUT, 'status=Pending Deployment\n');
+            } else {
+              console.log('MIDNIGHT_SEED provided. Live deployment requires Midnight CLI and active RPC node.');
+              const contractAddress = 'NOT_CONFIGURED';
+              const txHash = 'N/A (Pending On-Chain Deployment)';
+              fs.appendFileSync(process.env.GITHUB_OUTPUT, 'contract_address=' + contractAddress + '\n');
+              fs.appendFileSync(process.env.GITHUB_OUTPUT, 'tx_hash=' + txHash + '\n');
+              fs.appendFileSync(process.env.GITHUB_OUTPUT, 'network=' + network + '\n');
+              fs.appendFileSync(process.env.GITHUB_OUTPUT, 'status=Pending Deployment\n');
             }
-            fs.writeFileSync('.env', env);
           "
 
-      # ── Build frontend with deployed contract address ─────────────────────
+      # ── Build frontend with contract address ──────────────────────────────
       - name: Build frontend
         env:
           VITE_CONTRACT_ADDRESS_PREPROD: ${{ steps.deploy.outputs.contract_address }}
@@ -156,14 +154,15 @@ jobs:
           CONTRACT_ADDRESS: ${{ steps.deploy.outputs.contract_address }}
           TX_HASH: ${{ steps.deploy.outputs.tx_hash }}
           NETWORK: ${{ steps.deploy.outputs.network }}
+          STATUS: ${{ steps.deploy.outputs.status }}
         run: |
-          echo "## 🛡️ Midnight Smart Contract Deployed!" >> $GITHUB_STEP_SUMMARY
+          echo "## 🛡️ Midnight Smart Contract Status" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Parameter | Value |" >> $GITHUB_STEP_SUMMARY
           echo "|---|---|" >> $GITHUB_STEP_SUMMARY
           echo "| **Network** | \`$NETWORK\` (Testnet) |" >> $GITHUB_STEP_SUMMARY
           echo "| **Contract Address** | \`$CONTRACT_ADDRESS\` |" >> $GITHUB_STEP_SUMMARY
           echo "| **Transaction Hash** | \`$TX_HASH\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| **Status** | ✅ Confirmed & Active |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Status** | 🟡 $STATUS (Local ZK Simulation Active) |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "> The frontend has been compiled with this contract address baked in." >> $GITHUB_STEP_SUMMARY
+          echo "> See [docs/DEPLOYMENT_CHECKLIST.md](docs/DEPLOYMENT_CHECKLIST.md) to complete on-chain broadcast." >> $GITHUB_STEP_SUMMARY

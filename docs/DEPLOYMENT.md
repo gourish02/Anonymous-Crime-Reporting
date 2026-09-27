@@ -106,9 +106,10 @@ VITE_PROOF_SERVER_URI=http://localhost:6300
 2. Set environment variables in Vercel Dashboard → **Settings → Environment Variables**:
    ```env
    VITE_MIDNIGHT_NETWORK=preprod
-   VITE_CONTRACT_ADDRESS_PREPROD=0200fd03c98cb6cccd46085adb1f1bfc68841d3725bd6cbecf0d265f94099a0e
+   VITE_CONTRACT_ADDRESS_PREPROD=<your-deployed-contract-address>
    ```
    > ⚠️ **Important**: Always use standard Vercel environment variables. Do NOT use deprecated Vercel CLI secrets (`@contract_address_preprod`), which will fail with secret reference errors.
+   > If left blank or unset, SafeCity safely defaults to `"NOT_CONFIGURED"` and operates in local ZK simulation mode. See [docs/DEPLOYMENT_CHECKLIST.md](DEPLOYMENT_CHECKLIST.md) to deploy your on-chain instance.
 3. If using the GitHub Actions deploy workflow, configure in GitHub → **Settings → Secrets**:
    ```
    VERCEL_TOKEN
@@ -132,7 +133,7 @@ vercel --prod
 # With standard plaintext env vars (never use @secrets)
 vercel --prod \
   -e VITE_MIDNIGHT_NETWORK=preprod \
-  -e VITE_CONTRACT_ADDRESS_PREPROD=0200fd03c98cb6cccd46085adb1f1bfc68841d3725bd6cbecf0d265f94099a0e
+  -e VITE_CONTRACT_ADDRESS_PREPROD=<your-deployed-contract-address>
 ```
 
 ### Fallback Support:
@@ -143,6 +144,7 @@ const contractAddress =
   "NOT_CONFIGURED";
 ```
 The application builds cleanly and displays a user-friendly warning banner and toast notifications explaining that the contract is running in simulation mode until configured.
+See [DEPLOYMENT_CHECKLIST.md](DEPLOYMENT_CHECKLIST.md) for full deployment steps.
 
 ---
 
@@ -174,7 +176,7 @@ curl http://localhost:6300/health
 |---|---|---|---|
 | `VITE_MIDNIGHT_NETWORK` | ✅ | `preprod` | Target network (`preprod` or `devnet`) |
 | `VITE_CONTRACT_ADDRESS_PREPROD` | ⚠️ | `NOT_CONFIGURED` | Midnight preprod contract address (falls back to `NOT_CONFIGURED` with user notice) |
-| `VITE_CONTRACT_ADDRESS_DEVNET` | ❌ | `02000000...` | Local devnet contract address |
+| `VITE_CONTRACT_ADDRESS_DEVNET` | ❌ | `NOT_CONFIGURED` | Local devnet contract address |
 | `VITE_PROOF_SERVER_URI` | ❌ | `http://localhost:6300` | Proof server endpoint |
 
 > **Block Explorer Inspection**: To verify contract transactions on the testnet, visit [Midnight Testnet Explorer](https://testnet.midnightexplorer.com) and search for the contract address. Direct URLs without prior on-chain indexing may not resolve.

@@ -52,8 +52,9 @@ export const isContractConfigured = (addr?: string): boolean => {
 export const CONTRACT_ADDRESSES: Record<string, string | undefined> = {
   preprod: isContractConfigured(contractAddress)
     ? contractAddress
-    : '0200fd03c98cb6cccd46085adb1f1bfc68841d3725bd6cbecf0d265f94099a0e',
-  devnet: (import.meta.env.VITE_CONTRACT_ADDRESS_DEVNET as string | undefined) ||
-    '0200000000000000000000000000000000000000000000000000000000000000',
+    : undefined,
+  devnet: isContractConfigured(import.meta.env.VITE_CONTRACT_ADDRESS_DEVNET as string | undefined)
+    ? (import.meta.env.VITE_CONTRACT_ADDRESS_DEVNET as string)
+    : undefined,
 }
 
