@@ -39,6 +39,7 @@ import type {
   AgeCredentialInput,
   AgeEligibilityStatus,
 } from '@/types'
+import { contractAddress, isContractConfigured, CONTRACT_ADDRESSES } from '@/config/networks'
 
 // ── In-Memory Storage Polyfill for Vitest / Node Environment ─────────────────
 
@@ -688,6 +689,44 @@ describe('SafeCity — Midnight Blockchain Test Suite', () => {
     expect(commitment).toMatch(/^0x[a-f0-9]{64}$/)
     expect(commitment).not.toContain(privateFullName)
     expect(commitment).not.toContain(privateDOB)
+  })
+
+  // Test 10: Fallback contractAddress handling
+  it('10. Contract fallback handling is active and validates properly', () => {
+    expect(typeof contractAddress).toBe('string')
+    expect(contractAddress.length).toBeGreaterThan(0)
+    // If NOT_CONFIGURED, isContractConfigured returns false
+    expect(isContractConfigured('NOT_CONFIGURED')).toBe(false)
+    expect(isContractConfigured('TEMP_CONTRACT_ADDRESS')).toBe(false)
+    expect(isContractConfigured('')).toBe(false)
+    expect(isContractConfigured(undefined)).toBe(false)
+    expect(isContractConfigured('0200fd03c98cb6cccd46085adb1f1bfc68841d3725bd6cbecf0d265f94099a0e')).toBe(true)
+  })
+
+  // Test 11: User-friendly error is thrown when contract address is NOT_CONFIGURED
+  it('11. Throws a user-friendly error when contractAddress is NOT_CONFIGURED', async () => {
+    const originalAddr = CONTRACT_ADDRESSES.preprod
+    try {
+      CONTRACT_ADDRESSES.preprod = 'NOT_CONFIGURED'
+
+      const dummyForm: ReportFormData = {
+        crimeType: 1,
+        location: 'Sector 4',
+        date: '2026-09-27',
+        description: 'Testing user friendly error handling for missing contract address',
+        evidenceHash: '',
+      }
+
+      await expect(submitCrimeReport(dummyForm, 'preprod')).rejects.toThrow(
+        /Contract address is NOT_CONFIGURED/i
+      )
+
+      await expect(verifyReport(12345n, 'preprod')).rejects.toThrow(
+        /Contract address is NOT_CONFIGURED/i
+      )
+    } finally {
+      CONTRACT_ADDRESSES.preprod = originalAddr
+    }
   })
 })
 

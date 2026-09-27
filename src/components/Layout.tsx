@@ -5,10 +5,12 @@
 import { Outlet } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { Navbar } from './Navbar'
+import { ContractStatusBanner } from './ContractStatusBanner'
 
 export function Layout() {
   return (
     <div className="layout">
+      <ContractStatusBanner />
       <Navbar />
       <main className="page-content">
         <Outlet />

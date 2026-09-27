@@ -11,7 +11,7 @@ export const NETWORKS: Record<string, NetworkConfig> = {
     indexerUri: 'https://indexer.testnet-02.midnight.network/api/v1/graphql',
     proofServerUri: 'http://localhost:6300',
     rpcUri: 'https://rpc.testnet-02.midnight.network',
-    explorerBaseUrl: 'https://explorer.testnet-02.midnight.network',
+    explorerBaseUrl: 'https://testnet.midnightexplorer.com',
   },
   devnet: {
     networkId: 'devnet',
@@ -35,7 +35,19 @@ export const getNetworkConfig = (id: string): NetworkConfig => {
 // ── Fallback contract address support for Vercel & CI builds ──────────────────
 export const contractAddress =
   import.meta.env.VITE_CONTRACT_ADDRESS_PREPROD ||
-  "TEMP_CONTRACT_ADDRESS";
+  "NOT_CONFIGURED";
+
+/**
+ * Validates whether a contract address has been supplied and is not a placeholder.
+ */
+export const isContractConfigured = (addr?: string): boolean => {
+  return Boolean(
+    addr &&
+    addr !== 'NOT_CONFIGURED' &&
+    addr !== 'TEMP_CONTRACT_ADDRESS' &&
+    addr.trim().length > 0
+  )
+}
 
 export const CONTRACT_ADDRESSES: Record<string, string | undefined> = {
   preprod: contractAddress,
