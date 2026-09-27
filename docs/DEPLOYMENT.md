@@ -179,4 +179,4 @@ curl http://localhost:6300/health
 | `VITE_CONTRACT_ADDRESS_DEVNET` | ❌ | `NOT_CONFIGURED` | Local devnet contract address |
 | `VITE_PROOF_SERVER_URI` | ❌ | `http://localhost:6300` | Proof server endpoint |
 
-> **Block Explorer Inspection**: To verify contract transactions on the testnet, visit [Midnight Testnet Explorer](https://testnet.midnightexplorer.com) and search for the contract address. Direct URLs without prior on-chain indexing may not resolve.
+> **Block Explorer Inspection**: To verify contract transactions on the testnet, visit the [Midnight Preprod Explorer](https://preprod.midnightexplorer.com) or [Midnight Subscan Preprod](https://midnight-preprod.subscan.io) and search for the contract address. Direct URLs without prior on-chain indexing may not resolve.

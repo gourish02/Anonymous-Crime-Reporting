@@ -103,5 +103,5 @@ To complete the transition from simulation mode to a live on-chain contract:
 2. Obtain tDUST from `https://faucet.testnet-02.midnight.network`.
 3. Run `compactc` via Docker to generate real circuit proving keys.
 4. Execute `midnight-cli deploy` with your funded seed phrase.
-5. Search the generated address on [Midnight Testnet Explorer](https://testnet.midnightexplorer.com).
+5. Search the generated address on [Midnight Preprod Explorer](https://preprod.midnightexplorer.com).
 6. Update `VITE_CONTRACT_ADDRESS_PREPROD` in Vercel and `.env`.

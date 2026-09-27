@@ -45,7 +45,7 @@ export function ContractStatusBanner() {
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
         <a
-          href="https://testnet.midnightexplorer.com"
+          href="https://preprod.midnightexplorer.com"
           target="_blank"
           rel="noopener noreferrer"
           style={{

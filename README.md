@@ -16,6 +16,7 @@
 ## 📑 Table of Contents
 
 - [Overview](#-overview)
+- [Contract Information](#-contract-information)
 - [Features](#-features)
 - [Architecture](#-architecture)
 - [Crime Reporting Module](#-crime-reporting-module)
@@ -42,18 +43,37 @@ Public safety and civic reporting systems face three critical privacy and compli
 
 **SafeCity** eliminates all three dilemmas by leveraging the **Midnight Blockchain**'s dual-state zero-knowledge architecture. Through local witness generation and on-circuit zero-knowledge proofs ($\pi$), SafeCity proves the validity of reports, volunteer certifications, and age eligibility mathematically on-chain without revealing who filed the report, who holds the credential, or what the user's exact age is.
 
-### 🌐 Preprod Contract Deployment Status
+---
+
+## Contract Information
+
+Network:
+Preprod
+
+Contract Address:
+`NOT_CONFIGURED` (Pending live on-chain deployment. SafeCity operates in verified local ZK proof simulation mode; see [docs/DEPLOYMENT_CHECKLIST.md](docs/DEPLOYMENT_CHECKLIST.md) to deploy your on-chain instance)
+
+Explorer:
+[https://preprod.midnightexplorer.com](https://preprod.midnightexplorer.com)
+
+Alternative Explorer:
+[https://midnight-preprod.subscan.io](https://midnight-preprod.subscan.io)
+
+Contract Registry / Search:
+[https://preprod.midnightexplorer.com/contracts](https://preprod.midnightexplorer.com/contracts)
 
 | Parameter | Value |
 |---|---|
 | **Platform** | SafeCity Decentralized Public Safety Platform |
 | **Network** | Midnight Preprod Testnet (`testnet-02`) |
-| **Contract Address** | `NOT_CONFIGURED` (Pending Testnet Deployment) |
+| **Contract Address** | `NOT_CONFIGURED` (Pending On-Chain Broadcast) |
 | **Status** | 🟡 **ZK Cryptographic Simulation Mode** (Verified via Simulator & Pending On-Chain Broadcast) |
 | **Module 1 Circuits** | `submitCrimeReport`, `verifyReport`, `getReportStatus`, `updateReportStatus`, `upvoteReport` |
 | **Module 2 Circuits** | `submitVolunteerCredential`, `verifyVolunteerCredential`, `getVerificationStatus`, `registerVolunteerCredential`, `proveVolunteerEligibility` |
 | **Module 3 Circuits** | `submitAgeCredential`, `verifyAgeEligibility`, `getEligibilityStatus` |
-| **Block Explorer** | [Midnight Testnet Explorer](https://testnet.midnightexplorer.com) |
+| **Primary Block Explorer** | [Midnight Preprod Explorer](https://preprod.midnightexplorer.com) |
+| **Secondary Block Explorer** | [Midnight Preprod Subscan](https://midnight-preprod.subscan.io) |
+| **Contract Search** | [preprod.midnightexplorer.com/contracts](https://preprod.midnightexplorer.com/contracts) |
 | **Deployment Checklist** | [docs/DEPLOYMENT_CHECKLIST.md](docs/DEPLOYMENT_CHECKLIST.md) |
 | **Verification Report** | [docs/DEPLOYMENT_VERIFICATION_REPORT.md](docs/DEPLOYMENT_VERIFICATION_REPORT.md) |
 

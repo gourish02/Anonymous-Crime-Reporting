@@ -122,7 +122,7 @@ The SafeCity contract is written in Compact (`contract/src/crime_report.compact`
 ## 🔍 Step 4: Explorer & On-Chain Verification
 
 - [ ] **Open Midnight Explorer**:
-  Visit [Midnight Testnet Explorer](https://testnet.midnightexplorer.com).
+  Visit [Midnight Preprod Explorer](https://preprod.midnightexplorer.com) or [Midnight Subscan Preprod](https://midnight-preprod.subscan.io).
 
 - [ ] **Search Deployed Contract Address**:
   - Enter your 64-character contract address in the search box.

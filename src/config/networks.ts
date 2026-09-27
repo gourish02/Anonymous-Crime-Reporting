@@ -11,7 +11,7 @@ export const NETWORKS: Record<string, NetworkConfig> = {
     indexerUri: 'https://indexer.testnet-02.midnight.network/api/v1/graphql',
     proofServerUri: 'http://localhost:6300',
     rpcUri: 'https://rpc.testnet-02.midnight.network',
-    explorerBaseUrl: 'https://testnet.midnightexplorer.com',
+    explorerBaseUrl: 'https://preprod.midnightexplorer.com',
   },
   devnet: {
     networkId: 'devnet',

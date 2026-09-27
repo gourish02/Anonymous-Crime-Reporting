@@ -1013,7 +1013,7 @@ export function PublicSafetyDashboardPage() {
           <div style={{ background: 'rgba(17, 17, 27, 0.6)', padding: '1rem', borderRadius: '10px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
             <div style={{ color: 'var(--subtext0)', fontSize: '0.78rem', marginBottom: '4px' }}>Midnight Block Explorer</div>
             <a
-              href="https://testnet.midnightexplorer.com"
+              href="https://preprod.midnightexplorer.com"
               target="_blank"
               rel="noopener noreferrer"
               style={{ color: 'var(--blue)', display: 'inline-flex', alignItems: 'center', gap: '4px', textDecoration: 'none', fontWeight: 600, fontSize: '0.82rem' }}
