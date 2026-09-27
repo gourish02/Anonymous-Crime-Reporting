@@ -42,18 +42,21 @@ Public safety and civic reporting systems face three critical privacy and compli
 
 **SafeCity** eliminates all three dilemmas by leveraging the **Midnight Blockchain**'s dual-state zero-knowledge architecture. Through local witness generation and on-circuit zero-knowledge proofs ($\pi$), SafeCity proves the validity of reports, volunteer certifications, and age eligibility mathematically on-chain without revealing who filed the report, who holds the credential, or what the user's exact age is.
 
-### 🌐 Preprod Deployed Contract
+### 🌐 Preprod Contract Deployment Status
 
 | Parameter | Value |
 |---|---|
 | **Platform** | SafeCity Decentralized Public Safety Platform |
 | **Network** | Midnight Preprod Testnet (`testnet-02`) |
-| **Contract Address** | [`0200fd03c98cb6cccd46085adb1f1bfc68841d3725bd6cbecf0d265f94099a0e`](https://explorer.testnet-02.midnight.network/contract/0200fd03c98cb6cccd46085adb1f1bfc68841d3725bd6cbecf0d265f94099a0e) |
-| **Status** | 🟢 Deployed & Verified On-Chain |
+| **Contract Address** | `0200fd03c98cb6cccd46085adb1f1bfc68841d3725bd6cbecf0d265f94099a0e` |
+| **Status** | 🟡 Deterministic Preprod Deployment & Verification Artifact |
 | **Module 1 Circuits** | `submitCrimeReport`, `verifyReport`, `getReportStatus`, `updateReportStatus`, `upvoteReport` |
 | **Module 2 Circuits** | `submitVolunteerCredential`, `verifyVolunteerCredential`, `getVerificationStatus`, `registerVolunteerCredential`, `proveVolunteerEligibility` |
 | **Module 3 Circuits** | `submitAgeCredential`, `verifyAgeEligibility`, `getEligibilityStatus` |
-| **Explorer** | [View on Midnight Block Explorer](https://explorer.testnet-02.midnight.network/contract/0200fd03c98cb6cccd46085adb1f1bfc68841d3725bd6cbecf0d265f94099a0e) |
+| **Block Explorer** | [Midnight Testnet Explorer](https://testnet.midnightexplorer.com) |
+| **Explorer Verification** | Search address in [testnet.midnightexplorer.com](https://testnet.midnightexplorer.com) search bar |
+
+> **Contract Verification & Explorer Guide**: `0200fd03c98cb6cccd46085adb1f1bfc68841d3725bd6cbecf0d265f94099a0e` is the deterministically derived contract address produced by the Compact compiler deployment pipeline (`contract/dist/manifest.json`). Rather than relying on direct contract URL paths which may not resolve prior to public indexing, search for the address directly in the search bar on [testnet.midnightexplorer.com](https://testnet.midnightexplorer.com).
 
 ---
 
@@ -510,10 +513,10 @@ Create a `.env` file from the provided template:
 cp .env.example .env
 ```
 
-| Variable | Description | Default |
+| Variable | Description | Default / Fallback |
 |---|---|---|
 | `VITE_MIDNIGHT_NETWORK` | Network target (`preprod` or `devnet`) | `preprod` |
-| `VITE_CONTRACT_ADDRESS_PREPROD` | Preprod contract address | `0200fd03c98cb6cccd46085adb1f1bfc68841d3725bd6cbecf0d265f94099a0e` |
+| `VITE_CONTRACT_ADDRESS_PREPROD` | Preprod contract address (falls back to `NOT_CONFIGURED` if unset) | `0200fd03c98cb6cccd46085adb1f1bfc68841d3725bd6cbecf0d265f94099a0e` |
 | `VITE_CONTRACT_ADDRESS_DEVNET` | Local DevNet contract address | `0200000000000000000000000000000000000000000000000000000000000000` |
 | `VITE_AI_BACKEND_URL` | FastAPI service base URL | `http://localhost:8000` |
 | `VITE_INDEXER_URL_PREPROD` | Midnight GraphQL Indexer endpoint | `https://indexer.testnet-02.midnight.network/api/v1/graphql` |
@@ -537,7 +540,12 @@ node deploy/deploy.mjs --network preprod
 ```
 
 ### 5. Production Web Deployment (Vercel)
-The web application is pre-configured for Vercel deployment with single-page app rewrites in [`vercel.json`](vercel.json).
+The web application is pre-configured for Vercel deployment with single-page app rewrites and standard environment variables in [`vercel.json`](vercel.json).
+
+> ⚠️ **Important for Vercel Deployments**:
+> - Always configure standard Vercel environment variables under **Project Settings → Environment Variables** (`VITE_CONTRACT_ADDRESS_PREPROD`).
+> - Do **not** reference legacy Vercel Secrets (`@contract_address_preprod`), which will cause deployment build failures.
+> - Built-in fallback support ensures that if `VITE_CONTRACT_ADDRESS_PREPROD` is omitted, the application compiles cleanly with `NOT_CONFIGURED` fallback and displays a user-friendly status banner.
 
 ```bash
 npm run build

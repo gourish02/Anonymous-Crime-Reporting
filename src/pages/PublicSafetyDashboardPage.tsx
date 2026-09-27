@@ -22,6 +22,7 @@ import { useApp } from '@/context/AppContext'
 import { getAllAttestedVolunteers } from '@/api/volunteer'
 import { CRIME_TYPES } from '@/types'
 import type { OnChainVolunteerAttestation } from '@/types'
+import { contractAddress, isContractConfigured } from '@/config/networks'
 
 export function PublicSafetyDashboardPage() {
   const navigate = useNavigate()
@@ -975,10 +976,31 @@ export function PublicSafetyDashboardPage() {
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1rem', fontSize: '0.85rem' }}>
           <div style={{ background: 'rgba(17, 17, 27, 0.6)', padding: '1rem', borderRadius: '10px', border: '1px solid var(--border)' }}>
-            <div style={{ color: 'var(--subtext0)', fontSize: '0.78rem', marginBottom: '4px' }}>Contract Address</div>
-            <code style={{ fontSize: '0.78rem', color: 'var(--lavender)', wordBreak: 'break-all' }}>
-              0200fd03c98cb6cccd46085adb1f1bfc68841d3725bd6cbecf0d265f94099a0e
-            </code>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+              <span style={{ color: 'var(--subtext0)', fontSize: '0.78rem' }}>Midnight Contract Address</span>
+              {isContractConfigured(contractAddress) && (
+                <button
+                  onClick={() => {
+                    handleCopy(contractAddress)
+                    setCopiedHash(contractAddress)
+                    setTimeout(() => setCopiedHash(null), 2000)
+                  }}
+                  style={{ background: 'transparent', border: 'none', color: 'var(--blue)', cursor: 'pointer', fontSize: '0.72rem', display: 'flex', alignItems: 'center', gap: '4px' }}
+                >
+                  {copiedHash === contractAddress ? <Check size={12} color="var(--green)" /> : <Copy size={12} />}
+                  {copiedHash === contractAddress ? 'Copied' : 'Copy'}
+                </button>
+              )}
+            </div>
+            {isContractConfigured(contractAddress) ? (
+              <code style={{ fontSize: '0.78rem', color: 'var(--lavender)', wordBreak: 'break-all' }}>
+                {contractAddress}
+              </code>
+            ) : (
+              <div style={{ color: '#fab387', fontSize: '0.78rem', fontWeight: 600 }}>
+                ⚠️ NOT_CONFIGURED (Demo Simulation Mode)
+              </div>
+            )}
           </div>
 
           <div style={{ background: 'rgba(17, 17, 27, 0.6)', padding: '1rem', borderRadius: '10px', border: '1px solid var(--border)' }}>
@@ -989,15 +1011,18 @@ export function PublicSafetyDashboardPage() {
           </div>
 
           <div style={{ background: 'rgba(17, 17, 27, 0.6)', padding: '1rem', borderRadius: '10px', border: '1px solid var(--border)', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-            <div style={{ color: 'var(--subtext0)', fontSize: '0.78rem', marginBottom: '4px' }}>Block Explorer</div>
+            <div style={{ color: 'var(--subtext0)', fontSize: '0.78rem', marginBottom: '4px' }}>Midnight Block Explorer</div>
             <a
-              href="https://explorer.testnet-02.midnight.network/contract/0200fd03c98cb6cccd46085adb1f1bfc68841d3725bd6cbecf0d265f94099a0e"
+              href="https://testnet.midnightexplorer.com"
               target="_blank"
               rel="noopener noreferrer"
-              style={{ color: 'var(--blue)', display: 'inline-flex', alignItems: 'center', gap: '4px', textDecoration: 'none', fontWeight: 600 }}
+              style={{ color: 'var(--blue)', display: 'inline-flex', alignItems: 'center', gap: '4px', textDecoration: 'none', fontWeight: 600, fontSize: '0.82rem' }}
             >
-              View on Midnight Explorer <ExternalLink size={13} />
+              Open Midnight Explorer <ExternalLink size={13} />
             </a>
+            <div style={{ fontSize: '0.72rem', color: 'var(--subtext0)', marginTop: '4px' }}>
+              Search for contract address on testnet explorer
+            </div>
           </div>
         </div>
       </motion.div>
