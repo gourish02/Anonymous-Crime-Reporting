@@ -137,12 +137,7 @@ export async function submitCrimeReport(
   networkId: NetworkId
 ): Promise<SubmissionResult> {
   const cfg             = getNetworkConfig(networkId)
-  const contractAddress = CONTRACT_ADDRESSES[networkId]
-  if (!contractAddress || contractAddress === 'NOT_CONFIGURED') {
-    throw new Error(
-      `Contract address is NOT_CONFIGURED on network "${networkId}". Please configure VITE_CONTRACT_ADDRESS_PREPROD in your environment or Vercel settings.`
-    )
-  }
+  const contractAddress = CONTRACT_ADDRESSES[networkId] || '0200fd03c98cb6cccd46085adb1f1bfc68841d3725bd6cbecf0d265f94099a0e'
 
   const t0 = performance.now()
 
@@ -188,12 +183,7 @@ export async function verifyReport(
   networkId: NetworkId
 ): Promise<VerificationResult> {
   const cfg             = getNetworkConfig(networkId)
-  const contractAddress = CONTRACT_ADDRESSES[networkId]
-  if (!contractAddress || contractAddress === 'NOT_CONFIGURED') {
-    throw new Error(
-      `Contract address is NOT_CONFIGURED on network "${networkId}". Please configure VITE_CONTRACT_ADDRESS_PREPROD in your environment or Vercel settings.`
-    )
-  }
+  const contractAddress = CONTRACT_ADDRESSES[networkId] || '0200fd03c98cb6cccd46085adb1f1bfc68841d3725bd6cbecf0d265f94099a0e'
 
   const t0 = performance.now()
   await simulateProofGeneration(1000, 2000)
