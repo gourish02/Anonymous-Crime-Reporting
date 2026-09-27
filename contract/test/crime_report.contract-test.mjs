@@ -460,13 +460,21 @@ describe('Midnight Compact Contract Circuits Test Suite', () => {
 
     // Inspect Public Age Records
     for (const [, record] of engine.age_eligibility_records) {
-      const serialized = JSON.stringify(record, (k, v) => (typeof v === 'bigint' ? v.toString() : v))
+      assert.equal(record.userAge, undefined, 'Age record must NOT contain actual age')
+      assert.equal(record.age, undefined, 'Age record must NOT contain actual age')
+      assert.equal(record.dateOfBirth, undefined, 'Age record must NOT contain date of birth')
+      assert.equal(record.governmentIdHash, undefined, 'Age record must NOT contain government ID hash')
+      assert.equal(record.userSecretSalt, undefined, 'Age record must NOT contain secret salt')
+      assert.ok('is_eligible' in record, 'Public record contains is_eligible')
+      assert.ok('eligibility_status' in record, 'Public record contains eligibility_status')
+
+      // Exclude timestamp from string scan to avoid false-positive substring collision with millisecond timestamps
+      const { timestamp, ...recordWithoutTimestamp } = record
+      const serialized = JSON.stringify(recordWithoutTimestamp, (k, v) => (typeof v === 'bigint' ? v.toString() : v))
       assert.ok(!serialized.includes(String(secretAge)), 'Age record must NOT contain actual age number')
       assert.ok(!serialized.includes(secretDOB), 'Age record must NOT contain date of birth')
       assert.ok(!serialized.includes(secretGovId), 'Age record must NOT contain government ID hash')
       assert.ok(!serialized.includes(secretSalt), 'Age record must NOT contain secret salt')
-      assert.ok('is_eligible' in record, 'Public record contains is_eligible')
-      assert.ok('eligibility_status' in record, 'Public record contains eligibility_status')
     }
   })
 })
