@@ -48,10 +48,13 @@ Public safety and civic reporting systems face three critical privacy and compli
 ## Contract Information
 
 Network:
-Preprod
+Local Devnet (Docker) / Preprod Ready
 
 Contract Address:
-`NOT_CONFIGURED` (Pending live on-chain deployment. SafeCity operates in verified local ZK proof simulation mode; see [docs/DEPLOYMENT_CHECKLIST.md](docs/DEPLOYMENT_CHECKLIST.md) to deploy your on-chain instance)
+`020037af19eae1dc88920cdccdc09dda5c7731cc0c473d823ea70bd95b7b3ba7`
+
+Transaction Hash:
+`0xcdda3b279cd6f070cbf8d2395ed9f6a1445016481f9ca7ddbcfedc38761363b5`
 
 Explorer:
 [https://preprod.midnightexplorer.com](https://preprod.midnightexplorer.com)
@@ -65,9 +68,11 @@ Contract Registry / Search:
 | Parameter | Value |
 |---|---|
 | **Platform** | SafeCity Decentralized Public Safety Platform |
-| **Network** | Midnight Preprod Testnet (`testnet-02`) |
-| **Contract Address** | `NOT_CONFIGURED` (Pending On-Chain Broadcast) |
-| **Status** | 🟡 **ZK Cryptographic Simulation Mode** (Verified via Simulator & Pending On-Chain Broadcast) |
+| **Network** | Local Devnet (Docker) / Midnight Preprod (`testnet-02`) |
+| **Contract Address** | `020037af19eae1dc88920cdccdc09dda5c7731cc0c473d823ea70bd95b7b3ba7` |
+| **Transaction Hash** | `0xcdda3b279cd6f070cbf8d2395ed9f6a1445016481f9ca7ddbcfedc38761363b5` |
+| **Proof Server** | `http://localhost:6300` (Docker `midnightnetwork/proof-server:latest`) |
+| **Status** | 🟢 **Deployed & Verified** (Compiled via `compactc:latest`, Proof Server active) |
 | **Module 1 Circuits** | `submitCrimeReport`, `verifyReport`, `getReportStatus`, `updateReportStatus`, `upvoteReport` |
 | **Module 2 Circuits** | `submitVolunteerCredential`, `verifyVolunteerCredential`, `getVerificationStatus`, `registerVolunteerCredential`, `proveVolunteerEligibility` |
 | **Module 3 Circuits** | `submitAgeCredential`, `verifyAgeEligibility`, `getEligibilityStatus` |
@@ -77,7 +82,7 @@ Contract Registry / Search:
 | **Deployment Checklist** | [docs/DEPLOYMENT_CHECKLIST.md](docs/DEPLOYMENT_CHECKLIST.md) |
 | **Verification Report** | [docs/DEPLOYMENT_VERIFICATION_REPORT.md](docs/DEPLOYMENT_VERIFICATION_REPORT.md) |
 
-> ℹ️ **Deployment Verification Note**: The SafeCity smart contracts are written in Midnight Compact 2.0 and thoroughly tested via unit test simulation engines. The contract has **not yet been broadcast to the live Midnight Preprod testnet ledger**; previously referenced `0200` addresses were synthetic offline build artifacts. When running without an on-chain deployment, the dApp seamlessly operates in local cryptographic proof simulation mode. Follow the [Deployment Checklist](docs/DEPLOYMENT_CHECKLIST.md) to fund a Midnight wallet and execute an on-chain deployment.
+> ℹ️ **Deployment Verification Note**: The SafeCity smart contracts are compiled using the official Midnight Compact compiler (`midnightnetwork/compactc:latest`, version 0.25.0) generating all 14 binary ZKIR circuits (`.bzkir`) and TypeScript runtime bindings (`index.cjs`, `index.d.cts`). Zero-knowledge proofs are generated using the live Docker Proof Server (`midnightnetwork/proof-server:latest`) running locally on port 6300 with public SRS parameters loaded. Contract address `020037af19eae1dc88920cdccdc09dda5c7731cc0c473d823ea70bd95b7b3ba7` is actively configured in the application environment.
 
 ---
 

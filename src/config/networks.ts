@@ -32,8 +32,12 @@ export const getNetworkConfig = (id: string): NetworkConfig => {
   return cfg
 }
 
-// ── Fallback contract address support for Vercel & CI builds ──────────────────
+// ── Fallback contract address support for Vercel, Local Devnet & CI builds ──────────────────
 export const contractAddress =
+  (import.meta.env.VITE_MIDNIGHT_NETWORK === 'devnet'
+    ? import.meta.env.VITE_CONTRACT_ADDRESS_DEVNET
+    : import.meta.env.VITE_CONTRACT_ADDRESS_PREPROD) ||
+  import.meta.env.VITE_CONTRACT_ADDRESS_DEVNET ||
   import.meta.env.VITE_CONTRACT_ADDRESS_PREPROD ||
   "NOT_CONFIGURED";
 

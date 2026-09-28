@@ -1,4 +1,4 @@
-pragma language_version >= 0.20;
+pragma language_version >= 0.17;
 
 import CompactStandardLibrary;
 
@@ -380,39 +380,43 @@ export circuit submitCrimeReport(
   timestamp:    Uint<64>,
   has_evidence: Boolean
 ): Field {
-  assert crime_type <= 7  "Invalid crime type category (must be 0-7)";
-  assert timestamp  > 0   "Timestamp must be non-zero";
+  assert(crime_type <= 7, "Invalid crime type category (must be 0-7)");
+  assert(timestamp  > 0, "Timestamp must be non-zero");
+
+  const pub_crime_type: Uint<8> = disclose(crime_type);
+  const pub_timestamp: Uint<64> = disclose(timestamp);
+  const pub_has_evidence: Boolean = disclose(has_evidence);
 
   const identityWitness: Bytes<32> = reporterIdentity();
-  assert identityWitness != pad(32, "") "Reporter identity witness must not be empty";
+  assert(identityWitness != pad(32, ""), "Reporter identity witness must not be empty");
 
   const descWitness: Bytes<128> = crimeDescription();
-  assert descWitness != pad(128, "") "Crime description witness must not be empty";
+  assert(descWitness != pad(128, ""), "Crime description witness must not be empty");
 
-  if (has_evidence) {
+  if (pub_has_evidence) {
     const evWitness: Bytes<32> = evidenceHash();
-    assert evWitness != pad(32, "") "Evidence hash witness must not be empty when has_evidence is true";
+    assert(evWitness != pad(32, ""), "Evidence hash witness must not be empty when has_evidence is true");
   }
 
   const id: Field = report_count as Field;
 
   const report: PublicReport = PublicReport {
     report_id:           id,
-    crime_type:          crime_type,
-    timestamp:           timestamp,
+    crime_type:          pub_crime_type,
+    timestamp:           pub_timestamp,
     verification_status: 0 as Uint<8>,    // Initial status: Pending
     verified:            false,
     upvotes:             0 as Uint<32>,
-    has_evidence:        has_evidence
+    has_evidence:        pub_has_evidence
   };
 
   public_reports.insert(id, report);
 
-  if (type_counts.member(crime_type)) {
-    const prev: Uint<32> = type_counts.lookup(crime_type);
-    type_counts.insert(crime_type, prev + 1 as Uint<32>);
+  if (type_counts.member(pub_crime_type)) {
+    const prev: Uint<32> = type_counts.lookup(pub_crime_type);
+    type_counts.insert(pub_crime_type, prev + 1 as Uint<32>);
   } else {
-    type_counts.insert(crime_type, 1 as Uint<32>);
+    type_counts.insert(pub_crime_type, 1 as Uint<32>);
   }
 
   report_count.increment(1);
@@ -432,12 +436,13 @@ export circuit submitCrimeReport(
  * @return          True if the report was successfully transitioned to Verified.
  */
 export circuit verifyReport(report_id: Field): Boolean {
-  assert report_id < report_count as Field "Report ID does not exist on-chain";
+  const pub_report_id: Field = disclose(report_id);
+  assert(public_reports.member(pub_report_id), "Report ID does not exist on-chain");
 
-  const r: PublicReport = public_reports.lookup(report_id);
-  assert r.verification_status == 0 as Uint<8> "Report has already been verified or processed";
+  const r: PublicReport = public_reports.lookup(pub_report_id);
+  assert(r.verification_status == 0 as Uint<8>, "Report has already been verified or processed");
 
-  public_reports.insert(report_id, PublicReport {
+  public_reports.insert(pub_report_id, PublicReport {
     report_id:           r.report_id,
     crime_type:          r.crime_type,
     timestamp:           r.timestamp,
@@ -461,8 +466,9 @@ export circuit verifyReport(report_id: Field): Boolean {
  * @return          verification_status code (Uint<8>).
  */
 export circuit getReportStatus(report_id: Field): Uint<8> {
-  assert report_id < report_count as Field "Report ID does not exist on-chain";
-  const r: PublicReport = public_reports.lookup(report_id);
+  const pub_report_id: Field = disclose(report_id);
+  assert(public_reports.member(pub_report_id), "Report ID does not exist on-chain");
+  const r: PublicReport = public_reports.lookup(pub_report_id);
   return r.verification_status;
 }
 
@@ -479,18 +485,20 @@ export circuit updateReportStatus(
   report_id:  Field,
   new_status: Uint<8>
 ): [] {
-  assert report_id < report_count as Field "Report ID does not exist on-chain";
-  assert new_status >= 1 as Uint<8>        "Status 0 (Pending) is reserved for initial submission";
-  assert new_status <= 3 as Uint<8>        "Invalid status code (must be 1, 2, or 3)";
+  const pub_report_id: Field = disclose(report_id);
+  const pub_new_status: Uint<8> = disclose(new_status);
+  assert(public_reports.member(pub_report_id), "Report ID does not exist on-chain");
+  assert(pub_new_status >= 1 as Uint<8>, "Status 0 (Pending) is reserved for initial submission");
+  assert(pub_new_status <= 3 as Uint<8>, "Invalid status code (must be 1, 2, or 3)");
 
-  const r: PublicReport = public_reports.lookup(report_id);
-  const is_verified: Boolean = new_status == 1 as Uint<8>;
+  const r: PublicReport = public_reports.lookup(pub_report_id);
+  const is_verified: Boolean = pub_new_status == 1 as Uint<8>;
 
-  public_reports.insert(report_id, PublicReport {
+  public_reports.insert(pub_report_id, PublicReport {
     report_id:           r.report_id,
     crime_type:          r.crime_type,
     timestamp:           r.timestamp,
-    verification_status: new_status,
+    verification_status: pub_new_status,
     verified:            is_verified,
     upvotes:             r.upvotes,
     has_evidence:        r.has_evidence
@@ -509,10 +517,11 @@ export circuit updateReportStatus(
  * @param report_id Unique identifier of the report to upvote.
  */
 export circuit upvoteReport(report_id: Field): [] {
-  assert report_id < report_count as Field "Report ID does not exist on-chain";
-  const r: PublicReport = public_reports.lookup(report_id);
+  const pub_report_id: Field = disclose(report_id);
+  assert(public_reports.member(pub_report_id), "Report ID does not exist on-chain");
+  const r: PublicReport = public_reports.lookup(pub_report_id);
 
-  public_reports.insert(report_id, PublicReport {
+  public_reports.insert(pub_report_id, PublicReport {
     report_id:           r.report_id,
     crime_type:          r.crime_type,
     timestamp:           r.timestamp,
@@ -552,7 +561,8 @@ export circuit upvoteReport(report_id: Field): [] {
  * @return          Unique public credential_id assigned on-chain.
  */
 export circuit submitVolunteerCredential(timestamp: Uint<64>): Field {
-  assert timestamp > 0 "Submission timestamp must be positive";
+  assert(timestamp > 0, "Submission timestamp must be positive");
+  const pub_timestamp: Uint<64> = disclose(timestamp);
 
   // 1. Evaluate private witnesses locally (never revealed)
   const name: Bytes<32>     = volunteerName();
@@ -564,33 +574,29 @@ export circuit submitVolunteerCredential(timestamp: Uint<64>): Field {
   const exp: Uint<64>       = expiryDate();
 
   // 2. Enforce cryptographic integrity constraints in zero knowledge
-  assert name     != pad(32, "") "volunteerName private witness must not be empty";
-  assert id       != pad(32, "") "volunteerId private witness must not be empty";
-  assert credHash != pad(32, "") "credentialHash private witness must not be empty";
-  assert certNo   != pad(32, "") "certificateNumber private witness must not be empty";
-  assert addr     != pad(64, "") "address private witness must not be empty";
-  assert phone    != pad(32, "") "phoneNumber private witness must not be empty";
-  assert exp      > 0            "expiryDate private witness must be a valid positive timestamp";
+  assert(name     != pad(32, ""), "volunteerName private witness must not be empty");
+  assert(id       != pad(32, ""), "volunteerId private witness must not be empty");
+  assert(credHash != pad(32, ""), "credentialHash private witness must not be empty");
+  assert(certNo   != pad(32, ""), "certificateNumber private witness must not be empty");
+  assert(addr     != pad(64, ""), "address private witness must not be empty");
+  assert(phone    != pad(32, ""), "phoneNumber private witness must not be empty");
+  assert(exp      > 0, "expiryDate private witness must be a valid positive timestamp");
 
   // 3. Assign unique public credential ID
   const cred_id: Field = volunteer_credential_count as Field;
 
   // 4. Initial verification status:
   // If already expired at submission time -> EXPIRED (3), otherwise VERIFIED (1)
-  const initial_status: Uint<8> = if (exp < timestamp) {
-    3 as Uint<8> // EXPIRED
-  } else {
-    1 as Uint<8> // VERIFIED
-  };
+  const initial_status: Uint<8> = disclose((exp < timestamp) ? (3 as Uint<8>) : (1 as Uint<8>));
 
   // 5. Update public state (Zero PII stored)
   volunteer_credential_records.insert(cred_id, VolunteerCredentialRecord {
     credential_id:       cred_id,
     verification_status: initial_status,
-    timestamp:           timestamp
+    timestamp:           pub_timestamp
   });
   volunteer_verification_status.insert(cred_id, initial_status);
-  volunteer_timestamp.insert(cred_id, timestamp);
+  volunteer_timestamp.insert(cred_id, pub_timestamp);
 
   volunteer_credential_count.increment(1);
 
@@ -629,9 +635,12 @@ export circuit verifyVolunteerCredential(
   credential_id: Field,
   current_time:  Uint<64>
 ): Uint<8> {
+  const pub_cred_id: Field = disclose(credential_id);
+  const pub_current_time: Uint<64> = disclose(current_time);
+
   // Ensure credential exists on public ledger
-  assert credential_id < volunteer_credential_count as Field "Volunteer credential does not exist on-chain";
-  assert current_time > 0                                    "Current timestamp must be positive";
+  assert(volunteer_credential_records.member(pub_cred_id), "Volunteer credential does not exist on-chain");
+  assert(pub_current_time > 0, "Current timestamp must be positive");
 
   // Evaluate private witnesses locally in ZK
   const name: Bytes<32>     = volunteerName();
@@ -643,29 +652,25 @@ export circuit verifyVolunteerCredential(
   const exp: Uint<64>       = expiryDate();
 
   // Validate integrity of private witnesses
-  assert name     != pad(32, "") "volunteerName private witness must not be empty";
-  assert id       != pad(32, "") "volunteerId private witness must not be empty";
-  assert credHash != pad(32, "") "credentialHash private witness must not be empty";
-  assert certNo   != pad(32, "") "certificateNumber private witness must not be empty";
-  assert addr     != pad(64, "") "address private witness must not be empty";
-  assert phone    != pad(32, "") "phoneNumber private witness must not be empty";
+  assert(name     != pad(32, ""), "volunteerName private witness must not be empty");
+  assert(id       != pad(32, ""), "volunteerId private witness must not be empty");
+  assert(credHash != pad(32, ""), "credentialHash private witness must not be empty");
+  assert(certNo   != pad(32, ""), "certificateNumber private witness must not be empty");
+  assert(addr     != pad(64, ""), "address private witness must not be empty");
+  assert(phone    != pad(32, ""), "phoneNumber private witness must not be empty");
 
   // Evaluate ACTIVE vs EXPIRED in zero knowledge:
   // If exp >= current_time -> ACTIVE (2), else EXPIRED (3)
-  const status: Uint<8> = if (exp >= current_time) {
-    2 as Uint<8> // ACTIVE
-  } else {
-    3 as Uint<8> // EXPIRED
-  };
+  const status: Uint<8> = disclose((exp >= current_time) ? (2 as Uint<8>) : (3 as Uint<8>));
 
   // Update public ledger state
-  volunteer_credential_records.insert(credential_id, VolunteerCredentialRecord {
-    credential_id:       credential_id,
+  volunteer_credential_records.insert(pub_cred_id, VolunteerCredentialRecord {
+    credential_id:       pub_cred_id,
     verification_status: status,
-    timestamp:           current_time
+    timestamp:           pub_current_time
   });
-  volunteer_verification_status.insert(credential_id, status);
-  volunteer_timestamp.insert(credential_id, current_time);
+  volunteer_verification_status.insert(pub_cred_id, status);
+  volunteer_timestamp.insert(pub_cred_id, pub_current_time);
 
   return status;
 }
@@ -691,8 +696,9 @@ export circuit verifyVolunteerCredential(
  * @return              Status code (Uint<8>): 0 = NOT VERIFIED, 1 = VERIFIED, 2 = ACTIVE, 3 = EXPIRED.
  */
 export circuit getVerificationStatus(credential_id: Field): Uint<8> {
-  assert credential_id < volunteer_credential_count as Field "Volunteer credential does not exist on-chain";
-  return volunteer_verification_status.lookup(credential_id);
+  const pub_cred_id: Field = disclose(credential_id);
+  assert(volunteer_credential_records.member(pub_cred_id), "Volunteer credential does not exist on-chain");
+  return volunteer_verification_status.lookup(pub_cred_id);
 }
 
 // ── Commitment-Based Selective Disclosure Circuits ───────────────────────────
@@ -705,8 +711,11 @@ export circuit registerVolunteerCredential(
   commitment:  Bytes<32>,
   attested_at: Uint<64>
 ): Bytes<32> {
-  assert commitment != pad(32, "") "Volunteer commitment must not be empty";
-  assert attested_at > 0           "Attestation timestamp must be positive";
+  assert(commitment != pad(32, ""), "Volunteer commitment must not be empty");
+  assert(attested_at > 0, "Attestation timestamp must be positive");
+
+  const pub_commitment: Bytes<32> = disclose(commitment);
+  const pub_attested_at: Uint<64> = disclose(attested_at);
 
   const nameWitness: Bytes<32>    = volunteerName();
   const idWitness: Bytes<32>      = volunteerId();
@@ -715,17 +724,17 @@ export circuit registerVolunteerCredential(
   const contactWitness: Bytes<32> = phoneNumber();
   const expWitness: Uint<64>      = expiryDate();
 
-  assert nameWitness != pad(32, "")    "Volunteer name witness must not be empty";
-  assert idWitness != pad(32, "")      "Volunteer ID witness must not be empty";
-  assert addrWitness != pad(64, "")    "Volunteer address witness must not be empty";
-  assert certWitness != pad(32, "")    "Certificate number witness must not be empty";
-  assert contactWitness != pad(32, "") "Contact info witness must not be empty";
+  assert(nameWitness != pad(32, ""), "Volunteer name witness must not be empty");
+  assert(idWitness != pad(32, ""), "Volunteer ID witness must not be empty");
+  assert(addrWitness != pad(64, ""), "Volunteer address witness must not be empty");
+  assert(certWitness != pad(32, ""), "Certificate number witness must not be empty");
+  assert(contactWitness != pad(32, ""), "Contact info witness must not be empty");
 
-  const is_active: Boolean = expWitness >= attested_at;
+  const is_active: Boolean = disclose(expWitness >= attested_at);
 
-  volunteer_credentials.insert(commitment, VolunteerAttestation {
-    commitment:  commitment,
-    attested_at: attested_at,
+  volunteer_credentials.insert(pub_commitment, VolunteerAttestation {
+    commitment:  pub_commitment,
+    attested_at: pub_attested_at,
     is_verified: true,
     is_active:   is_active
   });
@@ -735,7 +744,7 @@ export circuit registerVolunteerCredential(
     active_volunteers_count.increment(1);
   }
 
-  return commitment;
+  return pub_commitment;
 }
 
 /**
@@ -746,7 +755,9 @@ export circuit proveVolunteerEligibility(
   commitment:   Bytes<32>,
   current_time: Uint<64>
 ): Boolean {
-  assert volunteer_credentials.member(commitment) "Volunteer credential commitment not found on-chain";
+  const pub_commitment: Bytes<32> = disclose(commitment);
+  const pub_current_time: Uint<64> = disclose(current_time);
+  assert(volunteer_credentials.member(pub_commitment), "Volunteer credential commitment not found on-chain");
 
   const nameWitness: Bytes<32>    = volunteerName();
   const idWitness: Bytes<32>      = volunteerId();
@@ -755,16 +766,16 @@ export circuit proveVolunteerEligibility(
   const contactWitness: Bytes<32> = phoneNumber();
   const expWitness: Uint<64>      = expiryDate();
 
-  assert nameWitness != pad(32, "")    "Volunteer name witness must not be empty";
-  assert idWitness != pad(32, "")      "Volunteer ID witness must not be empty";
-  assert addrWitness != pad(64, "")    "Volunteer address witness must not be empty";
-  assert certWitness != pad(32, "")    "Certificate number witness must not be empty";
-  assert contactWitness != pad(32, "") "Contact info witness must not be empty";
+  assert(nameWitness != pad(32, ""), "Volunteer name witness must not be empty");
+  assert(idWitness != pad(32, ""), "Volunteer ID witness must not be empty");
+  assert(addrWitness != pad(64, ""), "Volunteer address witness must not be empty");
+  assert(certWitness != pad(32, ""), "Certificate number witness must not be empty");
+  assert(contactWitness != pad(32, ""), "Contact info witness must not be empty");
 
-  const is_active: Boolean = expWitness >= current_time;
-  const prev: VolunteerAttestation = volunteer_credentials.lookup(commitment);
+  const is_active: Boolean = disclose(expWitness >= current_time);
+  const prev: VolunteerAttestation = volunteer_credentials.lookup(pub_commitment);
 
-  volunteer_credentials.insert(commitment, VolunteerAttestation {
+  volunteer_credentials.insert(pub_commitment, VolunteerAttestation {
     commitment:  prev.commitment,
     attested_at: prev.attested_at,
     is_verified: true,
@@ -779,8 +790,9 @@ export circuit proveVolunteerEligibility(
  * Read-only circuit to inspect whether a volunteer commitment is Verified & Active.
  */
 export circuit getVolunteerStatus(commitment: Bytes<32>): Boolean {
-  assert volunteer_credentials.member(commitment) "Volunteer credential commitment not found on-chain";
-  const att: VolunteerAttestation = volunteer_credentials.lookup(commitment);
+  const pub_commitment: Bytes<32> = disclose(commitment);
+  assert(volunteer_credentials.member(pub_commitment), "Volunteer credential commitment not found on-chain");
+  const att: VolunteerAttestation = volunteer_credentials.lookup(pub_commitment);
   return att.is_verified && att.is_active;
 }
 
@@ -822,7 +834,8 @@ export circuit getVolunteerStatus(commitment: Bytes<32>): Boolean {
  * @return          Unique public credential_id assigned on-chain.
  */
 export circuit submitAgeCredential(timestamp: Uint<64>): Field {
-  assert timestamp > 0 "Submission timestamp must be positive";
+  assert(timestamp > 0, "Submission timestamp must be positive");
+  const pub_timestamp: Uint<64> = disclose(timestamp);
 
   // 1. Evaluate private witnesses locally in zero-knowledge (never revealed)
   const age: Uint<16>          = userAge();
@@ -831,20 +844,17 @@ export circuit submitAgeCredential(timestamp: Uint<64>): Field {
   const salt: Bytes<32>        = userSecretSalt();
 
   // 2. Validate cryptographic integrity constraints
-  assert govId != pad(32, "") "governmentIdHash witness must not be empty";
-  assert salt  != pad(32, "") "userSecretSalt witness must not be empty";
-  assert dob   > 0            "dateOfBirth witness must be positive";
+  assert(govId != pad(32, ""), "governmentIdHash witness must not be empty");
+  assert(salt  != pad(32, ""), "userSecretSalt witness must not be empty");
+  assert(dob   > 0, "dateOfBirth witness must be positive");
 
   // 3. Evaluate verification logic in zero knowledge: age >= 18
   const is_eligible: Boolean = age >= 18;
 
   // 4. Determine public eligibility status:
   //    0 = NOT ELIGIBLE, 1 = ELIGIBLE
-  const status: Uint<8> = if (is_eligible) {
-    1 as Uint<8> // ELIGIBLE
-  } else {
-    0 as Uint<8> // NOT ELIGIBLE
-  };
+  const pub_is_eligible: Boolean = disclose(is_eligible);
+  const status: Uint<8> = pub_is_eligible ? (1 as Uint<8>) : (0 as Uint<8>);
 
   // 5. Assign unique public credential ID
   const cred_id: Field = age_credential_count as Field;
@@ -853,14 +863,14 @@ export circuit submitAgeCredential(timestamp: Uint<64>): Field {
   age_eligibility_records.insert(cred_id, AgeEligibilityRecord {
     credential_id:      cred_id,
     eligibility_status: status,
-    is_eligible:        is_eligible,
-    timestamp:          timestamp
+    is_eligible:        pub_is_eligible,
+    timestamp:          pub_timestamp
   });
   age_eligibility_status.insert(cred_id, status);
-  age_timestamp.insert(cred_id, timestamp);
+  age_timestamp.insert(cred_id, pub_timestamp);
 
   age_credential_count.increment(1);
-  if (is_eligible) {
+  if (pub_is_eligible) {
     eligible_users_count.increment(1);
   }
 
@@ -884,26 +894,25 @@ export circuit submitAgeCredential(timestamp: Uint<64>): Field {
  * @return              Eligibility status code (1 = ELIGIBLE, 0 = NOT ELIGIBLE).
  */
 export circuit verifyAgeEligibility(credential_id: Field, current_time: Uint<64>): Uint<8> {
-  assert current_time > 0 "Current timestamp must be positive";
-  assert credential_id < age_credential_count as Field "Age credential does not exist on-chain";
+  const pub_cred_id: Field = disclose(credential_id);
+  const pub_current_time: Uint<64> = disclose(current_time);
+
+  assert(pub_current_time > 0, "Current timestamp must be positive");
+  assert(age_eligibility_records.member(pub_cred_id), "Age credential does not exist on-chain");
 
   const age: Uint<16> = userAge();
-  const is_eligible: Boolean = age >= 18;
+  const pub_is_eligible: Boolean = disclose(age >= 18);
 
-  const status: Uint<8> = if (is_eligible) {
-    1 as Uint<8> // ELIGIBLE
-  } else {
-    0 as Uint<8> // NOT ELIGIBLE
-  };
+  const status: Uint<8> = pub_is_eligible ? (1 as Uint<8>) : (0 as Uint<8>);
 
-  age_eligibility_records.insert(credential_id, AgeEligibilityRecord {
-    credential_id:      credential_id,
+  age_eligibility_records.insert(pub_cred_id, AgeEligibilityRecord {
+    credential_id:      pub_cred_id,
     eligibility_status: status,
-    is_eligible:        is_eligible,
-    timestamp:          current_time
+    is_eligible:        pub_is_eligible,
+    timestamp:          pub_current_time
   });
-  age_eligibility_status.insert(credential_id, status);
-  age_timestamp.insert(credential_id, current_time);
+  age_eligibility_status.insert(pub_cred_id, status);
+  age_timestamp.insert(pub_cred_id, pub_current_time);
 
   return status;
 }
@@ -922,6 +931,7 @@ export circuit verifyAgeEligibility(credential_id: Field, current_time: Uint<64>
  * @return              Status code (Uint<8>): 0 = NOT ELIGIBLE, 1 = ELIGIBLE.
  */
 export circuit getEligibilityStatus(credential_id: Field): Uint<8> {
-  assert credential_id < age_credential_count as Field "Age credential does not exist on-chain";
-  return age_eligibility_status.lookup(credential_id);
+  const pub_cred_id: Field = disclose(credential_id);
+  assert(age_eligibility_records.member(pub_cred_id), "Age credential does not exist on-chain");
+  return age_eligibility_status.lookup(pub_cred_id);
 }
